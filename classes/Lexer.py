@@ -1,6 +1,6 @@
 
-from classes.Token import Token
-from classes.Token import TokenCategory
+from classes.Token import Token, TokenCategory
+from data.TransitionMatrixes import identifier_matrix
 
 class Lexer:
     
@@ -13,6 +13,8 @@ class Lexer:
         self.tokens : list[Token] = []
         self.file_input = file_input
         self.__read_input()
+        self.current_row_ix =  0
+        self.current_col_ix =  0
 
     def __read_input(self):
         # Open file in read mode
@@ -29,21 +31,10 @@ class Lexer:
         elif(char == '$'):
             # enviar a matriz comentario
             pass
-        elif(char in []):
-            # enviar a matriz palabras
-            pass
-        elif( char.isnumeric() ):
-            # enviar a matriz numeros
-            pass
-        elif(char in self.dictionary['delim_chars'] ):
-            # enviar a matriz delimitadores
-            pass
-        elif(char in self.dictionary['oper_chars'] ):
-            # enviar a matriz operadores
-            pass
     
     def __read_identifier() -> Token:
         pass
+    
     def __read_comment() -> Token:
         pass
     def __read_word() -> Token:
@@ -64,3 +55,4 @@ class Lexer:
     def __error_char_index() -> int:
         pass
     
+print(identifier_matrix)
