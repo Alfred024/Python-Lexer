@@ -20,21 +20,35 @@ class Lexer:
         # Open file in read mode
         with open(self.file_input, 'r') as file:
             for row in file:
+                self.current_row_ix += 1
                 for char in row:
-                    # TODO: Llevar el índice de los caracteres en la fila actual
                     self.__read_char(char)
                             
     def __read_char(self, char : str):
         if(char == '@'):
-            # enviar a matriz identificador
-            pass
+            self.__read_identifier()
         elif(char == '$'):
             # enviar a matriz comentario
             pass
+        elif(char in self.dictionary['delim_chars']):
+            # enviar a matriz delimitadores
+            pass
+        elif(char in self.dictionary['oper_chars']):
+            # enviar a matriz operadores
+            pass
+        elif(char in self.dictionary['spaces']):
+            # enviar a matriz espacios
+            pass
     
-    def __read_identifier() -> Token:
-        pass
-    
+    def __read_identifier(self) -> Token:
+        current_char = self.file_input[self.current_row_ix][self.current_col_ix]
+        value = ""
+        while(error):
+            value += current_char
+            self.current_row_ix += 1
+            
+        self.tokens = Token("IDENTIFIER" ,value) 
+        
     def __read_comment() -> Token:
         pass
     def __read_word() -> Token:
@@ -46,12 +60,8 @@ class Lexer:
     def __read_operator() -> Token:
         pass
     
-    def __get_next_token():
-        pass
-    
     def __is_whitespace() -> bool:
         pass
-    
     def __error_char_index() -> int:
         pass
     
