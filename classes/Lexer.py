@@ -1,71 +1,83 @@
-
 from classes.Token import Token, TokenCategory
 from data.TransitionMatrixes import identifier_matrix
 
 class Lexer:
-    
-    def __init__(self, file_input : str):
+    def __init__(self, file_input: str):
         self.dictionary = {
-            'delim_chars': [ '(', ')', '{', '}', '.' ],
-            'oper_chars': [ '+', '-', '*', '/', '=', '<', '>', '&', '|', '!' ],
-            'spaces': [ '\n', '\t', '' ],
+            'delim_chars': ['(', ')', '{', '}', '.'],
+            'oper_chars': ['+', '-', '*', '/', '=', '<', '>', '&', '|', '!'],
+            'spaces': ['\n', '\t', ' '],  # Corregido: '' no es un espacio válido
         }
-        self.tokens : list[Token] = []
+        self.tokens: list[Token] = []
         self.file_input = file_input
+        self.current_row_ix = 0
+        self.current_col_ix = 0
+        self.lines = []  # Almacenar las líneas del archivo
         self.__read_input()
-        self.current_row_ix =  0
-        self.current_col_ix =  0
 
     def __read_input(self):
-        # Open file in read mode
+        # Leer el archivo y almacenar las líneas
         with open(self.file_input, 'r') as file:
-            for row in file:
-                self.current_row_ix += 1
-                for char in row:
-                    self.__read_char(char)
-                            
-    def __read_char(self, char : str):
-        if(char == '@'):
+            self.lines = file.readlines()  # Guardar líneas en self.lines
+        self.current_row_ix = 0
+        # Procesar cada línea y carácter
+        while self.current_row_ix < len(self.lines):
+            self.current_col_ix = 0
+            while self.current_col_ix < len(self.lines[self.current_row_ix]):
+                char = self.lines[self.current_row_ix][self.current_col_ix]
+                self.__read_char(char)
+                self.current_col_ix += 1
+            self.current_row_ix += 1
+
+    def __read_char(self, char: str):
+        if char == '@':
             self.__read_identifier()
-        elif(char == '$'):
-            # enviar a matriz comentario
+        elif char == '$':
+            # TODO: Enviar a matriz de comentarios
             pass
-        elif(char in self.dictionary['delim_chars']):
-            # enviar a matriz delimitadores
+        elif char in self.dictionary['delim_chars']:
+            self.tokens.append(Token(TokenCategory.DELIMITER, char, self.current_row_ix + 1, self.current_col_ix + 1))
+        elif char in self.dictionary['oper_chars']:
+            self.tokens.append(Token(TokenCategory.OPERATOR, char, self.current_row_ix + 1, self.current_col_ix + 1))
+        elif char in self.dictionary['spaces']:
+            # Ignorar espacios en blanco
             pass
-        elif(char in self.dictionary['oper_chars']):
-            # enviar a matriz operadores
+        else:
+            # TODO: Manejar otros caracteres (números, palabras, etc.)
             pass
-        elif(char in self.dictionary['spaces']):
-            # enviar a matriz espacios
-            pass
-    
+
     def __read_identifier(self):
         value = ""
-        self.current_col_ix += 1  # Aqui ignoramos el @ ya que sabemos que es un identificador y no es neceasrio evaluarlo de nuevo
-        while self.current_col_ix < len(self.lines[self.current_row_ix]):
+        # No incrementamos current_col_ix aquí, ya que lo hacemos en __read_char
+        while self.current_col_ix + 1 < len(self.lines[self.current_row_ix]):
+            self.current_col_ix += 1
             current_char = self.lines[self.current_row_ix][self.current_col_ix]
-            if current_char.isalnum() or current_char == '_':  # Revisamos si el caracter actual es alfanumérico o un guion bajo
-                value += current_char # En caso de que sea valido de almacena en la variable
-                self.current_col_ix += 1
+            if current_char.isalnum() or current_char == '_':
+                value += current_char
             else:
+                self.current_col_ix -= 1  # Retroceder para procesar el próximo carácter en __read_char
                 break
-        self.tokens.append(Token("IDENTIFIER", value)) #Creamos el nuevo token con el valor que almacenamos anteriormente
-        
-    def __read_comment() -> Token:
+        # Determinar si es un tipo de dato o un identificador
+        category = TokenCategory.TYPE if value in ["Num", "Text", "Bool"] else TokenCategory.IDENTIFIER
+        self.tokens.append(Token(category, value, self.current_row_ix + 1, self.current_col_ix - len(value) + 1))
+
+    def __read_comment(self) -> Token:
         pass
-    def __read_word() -> Token:
+
+    def __read_word(self) -> Token:
         pass
-    def __read_number() -> Token:
+
+    def __read_number(self) -> Token:
         pass
-    def __read_delimitator() -> Token:
+
+    def __read_delimitator(self) -> Token:
         pass
-    def __read_operator() -> Token:
+
+    def __read_operator(self) -> Token:
         pass
-    
-    def __is_whitespace() -> bool:
+
+    def __is_whitespace(self) -> bool:
         pass
-    def __error_char_index() -> int:
+
+    def __error_char_index(self) -> int:
         pass
-    
-print(identifier_matrix)
