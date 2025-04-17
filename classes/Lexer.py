@@ -40,14 +40,17 @@ class Lexer:
             # enviar a matriz espacios
             pass
     
-    def __read_identifier(self) -> Token:
-        current_char = self.file_input[self.current_row_ix][self.current_col_ix]
+    def __read_identifier(self):
         value = ""
-        while(error):
-            value += current_char
-            self.current_row_ix += 1
-            
-        self.tokens = Token("IDENTIFIER" ,value) 
+        self.current_col_ix += 1  # Aqui ignoramos el @ ya que sabemos que es un identificador y no es neceasrio evaluarlo de nuevo
+        while self.current_col_ix < len(self.lines[self.current_row_ix]):
+            current_char = self.lines[self.current_row_ix][self.current_col_ix]
+            if current_char.isalnum() or current_char == '_':  # Revisamos si el caracter actual es alfanumérico o un guion bajo
+                value += current_char # En caso de que sea valido de almacena en la variable
+                self.current_col_ix += 1
+            else:
+                break
+        self.tokens.append(Token("IDENTIFIER", value)) #Creamos el nuevo token con el valor que almacenamos anteriormente
         
     def __read_comment() -> Token:
         pass
