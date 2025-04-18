@@ -1,5 +1,5 @@
 from classes.Token import Token, TokenCategory
-from data.TransitionMatrixes import identifier_matrix
+import data.TransitionMatrixes.identifier_matrix as id_matrix
 
 class Lexer:
     def __init__(self, file_input: str):
@@ -18,7 +18,7 @@ class Lexer:
     def __read_input(self):
         # Leer el archivo y almacenar las líneas
         with open(self.file_input, 'r') as file:
-            self.lines = file.readlines()  # Guardar líneas en self.lines
+            self.lines = [line.strip() for line in file.readlines()]  # Guardar líneas en self.lines
         self.current_row_ix = 0
         # Procesar cada línea y carácter
         while self.current_row_ix < len(self.lines):
@@ -47,19 +47,51 @@ class Lexer:
             pass
 
     def __read_identifier(self):
-        value = ""
-        # No incrementamos current_col_ix aquí, ya que lo hacemos en __read_char
+        value = "@" # Iniciamos con el carácter @, que ya habiamos detectado
+        state = 0 # Empezamos desde el estado inicial de la matriz de transicion 
+        
+        if '@' in id_matrix.identifier_matrix[state]:
+            state = id_matrix.identifier_matrix[state]['@']
+        else:
+            print(f"Error: No transición válida para '@' en estado 0")
+            return
+        
         while self.current_col_ix + 1 < len(self.lines[self.current_row_ix]):
-            self.current_col_ix += 1
-            current_char = self.lines[self.current_row_ix][self.current_col_ix]
-            if current_char.isalnum() or current_char == '_':
-                value += current_char
-            else:
-                self.current_col_ix -= 1  # Retroceder para procesar el próximo carácter en __read_char
+            self.current_col_ix += 1 
+            char = self.lines[self.current_row_ix][self.current_col_ix]
+            #print(f"DEBUG: char='{char}' | state={state} | value={value}")
+
+            # Transición válida segun la matriz
+            if state in id_matrix.identifier_matrix and char in id_matrix.identifier_matrix[state]:
+               state = id_matrix.identifier_matrix[state][char] # Cambiamos al nuevo estado
+               value += char  # Agregamos el carácter al nombre del identificador 
+            elif state == 2 and char == '.': # Si estamos en estado 2 y encontramos un punto significa que termino
+                value += char
+                break  
+            else: # Aqui es un estado de error 
+                state = -1
                 break
-        # Determinar si es un tipo de dato o un identificador
-        category = TokenCategory.TYPE if value in ["Num", "Text", "Bool"] else TokenCategory.IDENTIFIER
-        self.tokens.append(Token(category, value, self.current_row_ix + 1, self.current_col_ix - len(value) + 1))
+        if state == 2 and value.endswith('.'): #Aqui se hace una validacion final con el punto ya que no esta en la matriz
+            value = value[:-1] # Se quieta el punto para guardar solo el nombre real del identificador
+            ident_name = value[1:] #Se quita el @ para guardar solo el nombre y asi pase bien por el filtro de las palabras reservadas ya que habia un error y siempre validaba las palabras reservadas
+            if len(ident_name) > 15: #Valisdacion de longitud 
+                print(f"Error: Identificador demasiado largo '{value}'")
+                return
+            if ident_name in ["While", "For", "If", "Else", "Read", "Write", "Num", "Text", "Bool", "True", "False"]: #validar palabras reservadas
+                print(f"Error: '{value}' es una palabra reservada")
+                return
+            self.tokens.append(Token( #Si todo esta bien lo guardamos en el token 
+                TokenCategory.IDENTIFIER,
+                value,
+                self.current_row_ix + 1,
+                self.current_col_ix - len(value) + 2 
+            ))
+            print(f"Token IDENTIFIER válido: '{value}' en línea {self.current_row_ix + 1}")
+
+
+        else:
+           print(f"Error: Identificador mal formado en línea {self.current_row_ix + 1}, columna {self.current_col_ix + 1}")
+
 
     def __read_comment(self) -> Token:
         pass
