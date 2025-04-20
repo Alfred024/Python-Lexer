@@ -2,15 +2,20 @@ from enum import Enum
 
 class TokenCategory(Enum):
     IDENTIFIER = "IDENTIFIER"
-    TYPE = "TYPE"
     KEYWORD = "KEYWORD"
-    NUMBER = "NUMBER"
-    STRING = "STRING"
-    BOOLEAN = "BOOLEAN"
-    OPERATOR = "OPERATOR"
+    DATA_TYPE = "DATA_TYPE"
+    NUM = "NUM"
+    TEXT = "TEXT"
+    BOOL = "BOOL"
+    COMMENT = "COMMENT"
+    ARIT_OPER = "ARIT_OPER"
+    REL_OPER = "REL_OPER"
+    LOG_OPER = "LOG_OPER"
+    ASIG_OPER = "ASIG_OPER"
+    INC_OPER = "INC_OPER"
+    DEC_OPER = "DEC_OPER"
     DELIMITER = "DELIMITER"
     WHITESPACE = "WHITESPACE"
-    COMMENT = "COMMENT"
     ERROR = "ERROR"
 
 class Token:

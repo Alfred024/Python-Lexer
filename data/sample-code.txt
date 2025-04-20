@@ -1,9 +1,17 @@
-@valid_identifier.
-@valid123.
-@123invalid.
-@another_valid_123.
-@invalid-char!.
-@ThisIdentifierIsWayTooLongForTheLexer.
-@Num.
-@Bool.
-@Text.
+@Num x = 10.
+@Text texto = "Hola Mundo".
+@Bool bandera = true.
+
+If (x > 5) {
+   Write("x es mayor a 5");
+} Else {
+   Write("x es menor o igual a 5");
+}
+
+While (x < 20) {
+   @x = @x + 1;
+}
+
+For (Num i = 0; i < 3; i = i + 1) {
+   Write(i);
+}
