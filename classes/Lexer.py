@@ -1,96 +1,82 @@
+# Classes
 from classes.Token import Token, TokenCategory
+# Dictionary 📑
+import data.dictionary as dictionary
+# Transition matrixes 
+from data.TransitionMatrixes.identifier_matrix import IdentifierStates
 import data.TransitionMatrixes.identifier_matrix as id_matrix
 
 class Lexer:
     def __init__(self, file_input: str):
-        self.dictionary = {
-            'delim_chars': ['(', ')', '{', '}', '.'],
-            'oper_chars': ['+', '-', '*', '/', '=', '<', '>', '&', '|', '!'],
-            'spaces': ['\n', '\t', ' '],  # Corregido: '' no es un espacio válido
-        }
         self.tokens: list[Token] = []
         self.file_input = file_input
         self.current_row_ix = 0
         self.current_col_ix = 0
-        self.lines = []  # Almacenar las líneas del archivo
+        self.row_list = []
+        self.keywords = ["While", "For", "If", "Else", "Read", "Write", "Num", "Text", "Bool", "True", "False"]
         self.__read_input()
 
     def __read_input(self):
-        # Leer el archivo y almacenar las líneas
+        # Get rows of the file
         with open(self.file_input, 'r') as file:
-            self.lines = [line.strip() for line in file.readlines()]  # Guardar líneas en self.lines
-        self.current_row_ix = 0
-        # Procesar cada línea y carácter
-        while self.current_row_ix < len(self.lines):
+            self.row_list = [line.strip() for line in file.readlines()]
+
+        # Read every char from file_input
+        self.current_col_ix = 0
+        while self.current_row_ix < len(self.row_list):
             self.current_col_ix = 0
-            while self.current_col_ix < len(self.lines[self.current_row_ix]):
-                char = self.lines[self.current_row_ix][self.current_col_ix]
-                self.__read_char(char)
+            while self.current_col_ix < len(self.row_list[self.current_row_ix]):
+                char = self.row_list[self.current_row_ix][self.current_col_ix]
+                self.__categorize_char(char)
                 self.current_col_ix += 1
             self.current_row_ix += 1
 
-    def __read_char(self, char: str):
+    def __categorize_char(self, char: str):
         if char == '@':
             self.__read_identifier()
-        elif char == '$':
-            # TODO: Enviar a matriz de comentarios
+        elif char in dictionary.dictionary['delim_chars']:
             pass
-        elif char in self.dictionary['delim_chars']:
-            self.tokens.append(Token(TokenCategory.DELIMITER, char, self.current_row_ix + 1, self.current_col_ix + 1))
-        elif char in self.dictionary['oper_chars']:
-            self.tokens.append(Token(TokenCategory.OPERATOR, char, self.current_row_ix + 1, self.current_col_ix + 1))
-        elif char in self.dictionary['spaces']:
-            # Ignorar espacios en blanco
+        elif char in dictionary.dictionary['oper_chars']:
+            pass
+        elif char in dictionary.dictionary['spaces']:
+            pass
+        elif char == '$':
             pass
         else:
-            # TODO: Manejar otros caracteres (números, palabras, etc.)
             pass
 
     def __read_identifier(self):
-        value = "@" # Iniciamos con el carácter @, que ya habiamos detectado
-        state = 0 # Empezamos desde el estado inicial de la matriz de transicion 
+        lexeme = ""
+        state = IdentifierStates.INI_STATE 
         
-        if '@' in id_matrix.identifier_matrix[state]:
-            state = id_matrix.identifier_matrix[state]['@']
-        else:
-            print(f"Error: No transición válida para '@' en estado 0")
+        while self.current_col_ix + 1 < len(self.row_list[self.current_row_ix]): 
+            char = self.row_list[self.current_row_ix][self.current_col_ix]
+
+            # Check if the state exists in the transition matrix
+            if(state != None):
+                state = id_matrix.identifier_matrix.get(state, {}).get(char) # Get new state lexeme
+                lexeme += char
+            else:
+                print(f"⚠️ Error: Malformed IDENTIFIER '{lexeme}' in column[{self.current_col_ix}], row[{self.current_row_ix + 1}]")
+                return
+                
+            self.current_col_ix += 1
+        
+        if len(lexeme[1:]) > 16: # Validation of lenght counting the '@' char 
+            print(f"⚠️ Error: IDENTIFIER '{lexeme}' lenght is {len(lexeme[1:])}. Lexeme must have 15 chars as maximum.")
             return
         
-        while self.current_col_ix + 1 < len(self.lines[self.current_row_ix]):
-            self.current_col_ix += 1 
-            char = self.lines[self.current_row_ix][self.current_col_ix]
-            #print(f"DEBUG: char='{char}' | state={state} | value={value}")
-
-            # Transición válida segun la matriz
-            if state in id_matrix.identifier_matrix and char in id_matrix.identifier_matrix[state]:
-               state = id_matrix.identifier_matrix[state][char] # Cambiamos al nuevo estado
-               value += char  # Agregamos el carácter al nombre del identificador 
-            elif state == 2 and char == '.': # Si estamos en estado 2 y encontramos un punto significa que termino
-                value += char
-                break  
-            else: # Aqui es un estado de error 
-                state = -1
-                break
-        if state == 2 and value.endswith('.'): #Aqui se hace una validacion final con el punto ya que no esta en la matriz
-            value = value[:-1] # Se quieta el punto para guardar solo el nombre real del identificador
-            ident_name = value[1:] #Se quita el @ para guardar solo el nombre y asi pase bien por el filtro de las palabras reservadas ya que habia un error y siempre validaba las palabras reservadas
-            if len(ident_name) > 15: #Valisdacion de longitud 
-                print(f"Error: Identificador demasiado largo '{value}'")
-                return
-            if ident_name in ["While", "For", "If", "Else", "Read", "Write", "Num", "Text", "Bool", "True", "False"]: #validar palabras reservadas
-                print(f"Error: '{value}' es una palabra reservada")
-                return
-            self.tokens.append(Token( #Si todo esta bien lo guardamos en el token 
-                TokenCategory.IDENTIFIER,
-                value,
-                self.current_row_ix + 1,
-                self.current_col_ix - len(value) + 2 
-            ))
-            print(f"Token IDENTIFIER válido: '{value}' en línea {self.current_row_ix + 1}")
-
-
-        else:
-           print(f"Error: Identificador mal formado en línea {self.current_row_ix + 1}, columna {self.current_col_ix + 1}")
+        if lexeme[1:] in self.keywords: # Validation of no keyword lexeme
+            print(f"⚠️ Error: '{lexeme}' is a keyword.")
+            return
+        
+        print(f"✅ Token IDENTIFIER valid: '{lexeme}' in line {self.current_row_ix + 1}")
+        self.tokens.append(Token( #Si todo esta bien lo guardamos en el token 
+            TokenCategory.IDENTIFIER,
+            lexeme,
+            self.current_row_ix + 1,
+            self.current_col_ix - len(lexeme)
+        ))
 
 
     def __read_comment(self) -> Token:
