@@ -1,0 +1,9 @@
+@valid_identifier.
+@valid123.
+@123invalid.
+@_valid_123.
+@invalid-char!.
+@ThisIdentifierIsWayTooLongForTheLexer.
+@Num.
+@Bool.
+@Text.
