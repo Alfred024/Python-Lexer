@@ -90,24 +90,23 @@ class Lexer:
             self.current_col_ix - len(lexeme)
         ))
 
+    # TODO: Alfredo
     def __read_delimitator(self):
         
         pass
 
+    # TODO: Chaires
     def __read_comment(self):
         pass
 
+    # TODO: Oski
     def __read_word(self):
         pass
-
+    
+    # TODO: Oski
     def __read_number(self):
         pass
 
+    # TODO: Chaires
     def __read_operator(self):
-        pass
-
-    def __is_whitespace(self) -> bool:
-        pass
-
-    def __error_char_index(self) -> int:
         pass
