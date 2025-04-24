@@ -1,9 +1,9 @@
+import config
 from classes.Lexer import Lexer
-from config import project_config
 
 if __name__ == "__main__":
-    lexer = Lexer(project_config['idents_file'])
+    lexer = Lexer(config.DELIMS_FILE)
 
+    print('Tokens List: \n')
     for token in lexer.tokens:
-        if token.category == 'IDENTIFIER':
-            print(token)
+        print(token)

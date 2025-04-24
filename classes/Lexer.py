@@ -35,6 +35,7 @@ class Lexer:
                 self.current_col_ix += 1
             self.current_row_ix += 1
 
+    # TODO: Inidicar la instrucción que si el lexema es "", lo apendice como un error
     def __categorize_char(self, char: str):
         if char == '@':
             lexeme = self.__get_lexeme(
@@ -44,7 +45,13 @@ class Lexer:
             )
             self.__read_identifier(lexeme)
         elif char in dictionary.dictionary['delim_chars']:
-            self.__read_delimitator()
+            lexeme = self.__get_lexeme(
+                TokenCategory.DELIMITATOR,
+                DelimitatorStates,
+                delim_matrix.delimitator_matrix,
+            )
+            print(f'Lexeme getted: {lexeme}')
+            self.__read_delimitator(lexeme)
         elif char in dictionary.dictionary['oper_chars']:
             pass
         elif char in dictionary.dictionary['spaces']:
@@ -58,9 +65,8 @@ class Lexer:
         lexeme = ""
         state = token_category_states.INI_STATE 
         
-        while self.current_col_ix + 1 < len(self.row_list[self.current_row_ix]): 
+        while state != token_category_states.END_STATE: 
             char = self.row_list[self.current_row_ix][self.current_col_ix]
-
             # Check if the state exists in the transition matrix
             if(state != None):
                 state = token_category_matrix.get(state, {}).get(char) # Get new state lexeme
@@ -68,8 +74,11 @@ class Lexer:
             else:
                 print(f"⚠️ Error: Malformed {token_category} '{lexeme}' in column[{self.current_col_ix}], row[{self.current_row_ix + 1}]")
                 return ""
-
+            
             self.current_col_ix += 1
+            
+        if (self.current_col_ix + 1 == len(self.row_list[self.current_row_ix])):
+            self.current_row_ix += 1
         
         return lexeme
 
@@ -83,21 +92,43 @@ class Lexer:
             return
         
         print(f"✅ Token IDENTIFIER valid: '{lexeme}' in line {self.current_row_ix + 1}")
-        self.tokens.append(Token( #Si todo esta bien lo guardamos en el token 
-            TokenCategory.IDENTIFIER,
-            lexeme,
-            self.current_row_ix + 1,
-            self.current_col_ix - len(lexeme)
-        ))
+        self.tokens.append(
+            Token( 
+                TokenCategory.IDENTIFIER,
+                lexeme,
+                self.current_row_ix,
+                self.current_col_ix - len(lexeme)
+            )
+        )
 
-    def __read_delimitator(self):
+    def __read_delimitator(self, lexeme):
+        print(f"✅ Token DELIMITATOR valid: '{lexeme}' in line {self.current_row_ix + 1}")
+        token_category : TokenCategory
+                
+        if(lexeme == '('):
+            token_category = TokenCategory.DELIM_PARENT_LEFT
+        elif(lexeme == ')'):
+            token_category = TokenCategory.DELIM_PARENT_RIGHT
+        elif(lexeme == '{'):
+            token_category = TokenCategory.DELIM_BRACE_LEFT
+        elif(lexeme == '}'):
+            token_category = TokenCategory.DELIM_BRACE_RIGHT
+        else:
+            token_category = TokenCategory.DELIM_POINT
         
-        pass
+        self.tokens.append(
+            Token(
+                token_category,
+                lexeme,
+                self.current_row_ix,
+                self.current_col_ix - len(lexeme)
+            )
+        )
 
     def __read_comment(self):
         pass
 
-    def __read_word(self):
+    def __read_keyword(self):
         pass
 
     def __read_number(self):

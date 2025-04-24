@@ -1,8 +1,8 @@
-@Num x = 10.
-@Text texto = "Hola Mundo".
-@Bool bandera = true.
+Num @x = 10.
+Text @texto = "Hola Mundo".
+Bool @bandera = true.
 
-If (x > 5) {
+If (@x > 5) {
    Write("x es mayor a 5");
 } Else {
    Write("x es menor o igual a 5");
@@ -14,4 +14,8 @@ While (x < 20) {
 
 For (Num i = 0; i < 3; i = i + 1) {
    Write(i);
+}
+
+( @ola ) {
+    @adios.
 }
