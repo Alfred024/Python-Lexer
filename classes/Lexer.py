@@ -7,7 +7,8 @@ import data.dictionary as dictionary
 from data.TransitionMatrixes.identifier_matrix import IdentifierStates
 import data.TransitionMatrixes.identifier_matrix as id_matrix
     # Delims matrix
-
+from data.TransitionMatrixes.delimitator_matrix import DelimitatorStates
+import data.TransitionMatrixes.delimitator_matrix as delim_matrix
 
 class Lexer:
     def __init__(self, file_input: str):
@@ -117,7 +118,33 @@ class Lexer:
             )
         )
 
-    def __read_comment(self, lexeme: str) -> None:
+    def __read_operator(self, lexeme):
+        print(f"✅ Token OPERATOR valid: '{lexeme}' in line {self.current_row_ix + 1}")
+        token_category : TokenCategory
+                
+        if(lexeme in ['+', '-', '*', '/']):
+            token_category = TokenCategory.ARIT_OPER
+        elif(lexeme == ['==', '!=', '<', '>', '<=', '>=']):
+            token_category = TokenCategory.REL_OPER
+        elif(lexeme == ['&&', '||', '!']):
+            token_category = TokenCategory.LOG_OPER
+        elif(lexeme == '='):
+            token_category = TokenCategory.ASIG_OPER
+        elif(lexeme == '++'):
+            token_category = TokenCategory.INC_OPER
+        else:
+            token_category = TokenCategory.DEC_OPER
+        
+        self.tokens.append(
+            Token(
+                token_category,
+                lexeme,
+                self.current_row_ix,
+                self.current_col_ix,
+            )
+        )
+    
+    def __read_comment(self, lexeme: str):
         # Validar que el lexema comienza con '$'
         if not lexeme.startswith('$'):
             print(
@@ -138,7 +165,7 @@ class Lexer:
             self.current_col_ix - len(lexeme)
         ))
 
-    def __read_word(self, lexeme: str) -> None:
+    def __read_word(self, lexeme: str):
 
         # Validar que el lexema es una palabra reservada
         if lexeme not in self.keywords:
@@ -157,8 +184,4 @@ class Lexer:
     
     # TODO: Oski
     def __read_number(self):
-        pass
-
-    # TODO: Chaires
-    def __read_operator(self):
         pass
