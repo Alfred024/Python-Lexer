@@ -22,6 +22,7 @@ class TokenCategory(Enum):
     WHITESPACE = "WHITESPACE"
     ERROR = "ERROR"
 
+
 class Token:
     def __init__(self, category: TokenCategory, value: str, row: int = 0, col: int = 0):
         self.category = category
