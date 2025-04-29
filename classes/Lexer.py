@@ -9,6 +9,12 @@ import data.TransitionMatrixes.identifier_matrix as id_matrix
     # Delims matrix
 from data.TransitionMatrixes.delimitator_matrix import DelimitatorStates
 import data.TransitionMatrixes.delimitator_matrix as delim_matrix
+    # Comments matrix
+from data.TransitionMatrixes.comment_matrix import CommentStates
+import data.TransitionMatrixes.comment_matrix as comment_matrix
+    # Keywords matrix
+from data.TransitionMatrixes.keyword_matrix import KeywordStates
+import data.TransitionMatrixes.keyword_matrix as keyword_matrix
 
 class Lexer:
     def __init__(self, file_input: str):
@@ -39,10 +45,24 @@ class Lexer:
         if char == '@':
             lexeme = self.__get_lexeme(
                 TokenCategory.IDENTIFIER,
-                IdentifierStates,
+                IdentifierStates.INI_STATE,
                 id_matrix.identifier_matrix,
             )
             self.__read_identifier(lexeme)
+        elif char == '$':
+            lexeme = self.__get_lexeme(
+                TokenCategory.COMMENT,
+                CommentStates.INI_STATE,
+                comment_matrix.comment_matrix,
+            )
+            self.__read_comment(lexeme)
+        elif char in 'NTBWFIER':  # Primeras letras de palabras reservadas
+            lexeme = self.__get_lexeme(
+                TokenCategory.KEYWORD,
+                KeywordStates.INI_STATE,
+                keyword_matrix.keyword_matrix,
+            )
+            self.__read_word(lexeme)
         elif char in dictionary.dictionary['delim_chars']:
             lexeme = self.__get_lexeme(
                 TokenCategory.DELIMITATOR,
@@ -52,12 +72,11 @@ class Lexer:
             self.__read_delimitator(lexeme)
         elif char in dictionary.dictionary['spaces']:
             pass
-        elif char == '$':
-            pass
         else:
-            pass
+            print(
+                f"⚠️ Error: Unrecognized character '{char}' in line {self.current_row_ix + 1}, column {self.current_col_ix}")
 
-    def __get_lexeme(self, token_category : TokenCategory, token_category_states, token_category_matrix) -> str:
+    def __get_lexeme(self, token_category: TokenCategory, token_category_states, token_category_matrix) -> str:
         lexeme = ""
         state = token_category_states.INI_STATE 
         
@@ -71,10 +90,21 @@ class Lexer:
                 if(state == token_category_states.END_STATE):
                     break
             else:
-                print(f"⚠️ Error: Malformed {token_category} '{lexeme}' in column[{self.current_col_ix}], row[{self.current_row_ix + 1}]")
+                print(
+                    f"⚠️ Error: Malformed {token_category} '{lexeme}' in column[{self.current_col_ix}], row[{self.current_row_ix + 1}]")
                 return ""
             self.current_col_ix += 1
-        
+
+            # Para comentarios, detener si se alcanza END_STATE
+            if token_category == TokenCategory.COMMENT and state == CommentStates.END_STATE:
+                break
+
+        # Validar que se alcanzó un estado final válido
+        if state != token_category_states.END_STATE:
+            print(
+                f"⚠️ Error: Incomplete {token_category} '{lexeme}' in column[{self.current_col_ix}], row[{self.current_row_ix + 1}]")
+            return ""
+
         return lexeme
 
     def __read_identifier(self, lexeme):
@@ -151,7 +181,7 @@ class Lexer:
                 f"⚠️ Error: Invalid COMMENT '{lexeme}' in line {self.current_row_ix + 1}. Comments must start with '$'.")
             return
 
-        # Opcional: Validar longitud máxima (100 caracteres)
+        # Validar longitud máxima (100 caracteres)
         if len(lexeme) > 100:
             print(f"⚠️ Error: COMMENT '{lexeme}' length is {len(lexeme)}. Comments must be 100 chars or less.")
             return
@@ -165,7 +195,9 @@ class Lexer:
             self.current_col_ix - len(lexeme)
         ))
 
-    def __read_word(self, lexeme: str):
+    def __read_word(self, lexeme: str) -> None:
+        if not lexeme:  # Si __get_lexeme devolvió un lexema vacío (error)
+            return
 
         # Validar que el lexema es una palabra reservada
         if lexeme not in self.keywords:
