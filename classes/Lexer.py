@@ -7,8 +7,7 @@ import data.dictionary as dictionary
 from data.TransitionMatrixes.identifier_matrix import IdentifierStates
 import data.TransitionMatrixes.identifier_matrix as id_matrix
     # Delims matrix
-from data.TransitionMatrixes.delimitator_matrix import DelimitatorStates
-import data.TransitionMatrixes.delimitator_matrix as delim_matrix
+
 
 class Lexer:
     def __init__(self, file_input: str):
@@ -78,16 +77,16 @@ class Lexer:
         return lexeme
 
     def __read_identifier(self, lexeme):
-        if len(lexeme[1:]) > 16: # Validation of lenght counting the '@' char 
+        if len(lexeme[1:]) > 16: # Validation of lenght counting the '@' char
             print(f"⚠️ Error: IDENTIFIER '{lexeme}' lenght is {len(lexeme[1:])}. Lexeme must have 15 chars as maximum.")
             return
-        
+
         if lexeme[1:] in self.keywords: # Validation of no keyword lexeme
             print(f"⚠️ Error: '{lexeme}' is a keyword.")
             return
-        
+
         print(f"✅ Token IDENTIFIER valid: '{lexeme}' in line {self.current_row_ix + 1}")
-        self.tokens.append(Token( #Si todo esta bien lo guardamos en el token 
+        self.tokens.append(Token( #Si todo esta bien lo guardamos en el token
             TokenCategory.IDENTIFIER,
             lexeme,
             self.current_row_ix + 1,
@@ -118,13 +117,43 @@ class Lexer:
             )
         )
 
-    # TODO: Chaires
-    def __read_comment(self):
-        pass
+    def __read_comment(self, lexeme: str) -> None:
+        # Validar que el lexema comienza con '$'
+        if not lexeme.startswith('$'):
+            print(
+                f"⚠️ Error: Invalid COMMENT '{lexeme}' in line {self.current_row_ix + 1}. Comments must start with '$'.")
+            return
 
-    # TODO: Oski
-    def __read_word(self):
-        pass
+        # Opcional: Validar longitud máxima (100 caracteres)
+        if len(lexeme) > 100:
+            print(f"⚠️ Error: COMMENT '{lexeme}' length is {len(lexeme)}. Comments must be 100 chars or less.")
+            return
+
+        # Registrar el comentario como token
+        print(f"✅ Token COMMENT valid: '{lexeme}' in line {self.current_row_ix + 1}")
+        self.tokens.append(Token(
+            TokenCategory.COMMENT,
+            lexeme,
+            self.current_row_ix + 1,
+            self.current_col_ix - len(lexeme)
+        ))
+
+    def __read_word(self, lexeme: str) -> None:
+
+        # Validar que el lexema es una palabra reservada
+        if lexeme not in self.keywords:
+            print(
+                f"⚠️ Error: Invalid KEYWORD '{lexeme}' in line {self.current_row_ix + 1}. Must be one of {self.keywords}.")
+            return
+
+        # Registrar la palabra reservada como token
+        print(f"✅ Token KEYWORD valid: '{lexeme}' in line {self.current_row_ix + 1}")
+        self.tokens.append(Token(
+            TokenCategory.KEYWORD,
+            lexeme,
+            self.current_row_ix + 1,
+            self.current_col_ix - len(lexeme)
+        ))
     
     # TODO: Oski
     def __read_number(self):
