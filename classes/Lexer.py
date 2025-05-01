@@ -62,8 +62,15 @@ class Lexer:
                 KeywordStates.INI_STATE,
                 keyword_matrix.keyword_matrix,
             )
-            self.__read_word(lexeme)
+            self.__read_keyword(lexeme)
         elif char in dictionary.dictionary['delim_chars']:
+            lexeme = self.__get_lexeme(
+                TokenCategory.DELIMITATOR,
+                DelimitatorStates,
+                delim_matrix.delimitator_matrix,
+            )
+            self.__read_delimitator(lexeme)
+        elif char in dictionary.dictionary['oper_chars']:
             lexeme = self.__get_lexeme(
                 TokenCategory.DELIMITATOR,
                 DelimitatorStates,
@@ -82,7 +89,7 @@ class Lexer:
         
         while self.current_col_ix < len(self.row_list[self.current_row_ix]): 
             char = self.row_list[self.current_row_ix][self.current_col_ix]
-            print(F'Char: {char}')
+
             # Check if the state exists in the transition matrix
             if(state != None):
                 state = token_category_matrix.get(state, {}).get(char) # Get new state lexeme
@@ -98,12 +105,6 @@ class Lexer:
             # Para comentarios, detener si se alcanza END_STATE
             if token_category == TokenCategory.COMMENT and state == CommentStates.END_STATE:
                 break
-
-        # Validar que se alcanzó un estado final válido
-        if state != token_category_states.END_STATE:
-            print(
-                f"⚠️ Error: Incomplete {token_category} '{lexeme}' in column[{self.current_col_ix}], row[{self.current_row_ix + 1}]")
-            return ""
 
         return lexeme
 
@@ -195,8 +196,8 @@ class Lexer:
             self.current_col_ix - len(lexeme)
         ))
 
-    def __read_word(self, lexeme: str) -> None:
-        if not lexeme:  # Si __get_lexeme devolvió un lexema vacío (error)
+    def __read_keyword(self, lexeme: str) -> None:
+        if not lexeme:
             return
 
         # Validar que el lexema es una palabra reservada
