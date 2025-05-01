@@ -15,6 +15,9 @@ import data.TransitionMatrixes.comment_matrix as comment_matrix
     # Keywords matrix
 from data.TransitionMatrixes.keyword_matrix import KeywordStates
 import data.TransitionMatrixes.keyword_matrix as keyword_matrix
+    # Operators matrix
+from data.TransitionMatrixes.operator_matrix import OperatorStates
+import data.TransitionMatrixes.operator_matrix as operator_matrix
 
 class Lexer:
     def __init__(self, file_input: str):
@@ -72,11 +75,11 @@ class Lexer:
             self.__read_delimitator(lexeme)
         elif char in dictionary.dictionary['oper_chars']:
             lexeme = self.__get_lexeme(
-                TokenCategory.DELIMITATOR,
-                DelimitatorStates,
-                delim_matrix.delimitator_matrix,
+                TokenCategory.OPERATOR,
+                OperatorStates,
+                operator_matrix.operator_matrix,
             )
-            self.__read_delimitator(lexeme)
+            self.__read_operator(lexeme)
         elif char in dictionary.dictionary['spaces']:
             pass
         else:
@@ -97,6 +100,7 @@ class Lexer:
                 if(state == token_category_states.END_STATE):
                     break
             else:
+                # TODO: CUando un identificador está malformado, entonces deben de recorrerse todos los caracteres consecuentes hasta llegar a un espacio en blanco. ¿Es esto una forma válida de asegurarnos que un lexema malformado se omita? Ahorita como está el programa me genera cosas errores, como con el identificador "@123invalid.", el print de los tokens me marca esto: 
                 print(
                     f"⚠️ Error: Malformed {token_category} '{lexeme}' in column[{self.current_col_ix}], row[{self.current_row_ix + 1}]")
                 return ""
@@ -155,15 +159,15 @@ class Lexer:
                 
         if(lexeme in ['+', '-', '*', '/']):
             token_category = TokenCategory.ARIT_OPER
-        elif(lexeme == ['==', '!=', '<', '>', '<=', '>=']):
+        elif(lexeme in ['==', '!=', '<', '>', '<=', '>=']):
             token_category = TokenCategory.REL_OPER
-        elif(lexeme == ['&&', '||', '!']):
+        elif(lexeme in ['&&', '||', '!']):
             token_category = TokenCategory.LOG_OPER
         elif(lexeme == '='):
             token_category = TokenCategory.ASIG_OPER
         elif(lexeme == '++'):
             token_category = TokenCategory.INC_OPER
-        else:
+        elif(lexeme == '--'):
             token_category = TokenCategory.DEC_OPER
         
         self.tokens.append(

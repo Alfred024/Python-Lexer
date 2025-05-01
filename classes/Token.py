@@ -8,6 +8,7 @@ class TokenCategory(Enum):
     TEXT = "TEXT"
     BOOL = "BOOL"
     COMMENT = "COMMENT"
+    OPERATOR = "OPERATOR"
     ARIT_OPER = "ARIT_OPER"
     REL_OPER = "REL_OPER"
     LOG_OPER = "LOG_OPER"
