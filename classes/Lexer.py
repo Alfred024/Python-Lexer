@@ -82,10 +82,12 @@ class Lexer:
             )
             self.__read_operator(lexeme)
         elif char in alphabet.alphabet['spaces']:
+            self.__read_whitespace()
+        elif char in alphabet.alphabet['numbers']:
             pass
         else:
             self.errors.append({
-                'tipo': 'Caracter no reconocido',
+                'tipo': 'Char don´t recognize in alpahber',
                 'mensaje': f"Caracter '{char}' no reconocido",
                 'linea': self.current_row_ix + 1,
                 'columna': self.current_col_ix
@@ -97,6 +99,7 @@ class Lexer:
         pos = self.current_col_ix
 
         while pos < len(self.row_list[self.current_row_ix]):
+            print(f'Voy a buscar el char {char} en el state {state}')
             char = self.row_list[self.current_row_ix][pos]
             state  = token_category_matrix.get(state, {}).get(char)
 
@@ -248,3 +251,12 @@ class Lexer:
     # TODO: Oski
     def __read_number(self):
         pass
+    
+    def __read_whitespace(self):
+        pos = self.current_col_ix
+        char = self.row_list[self.current_row_ix][pos]
+        
+        while char in alphabet.alphabet['spaces'] and pos < len(self.row_list[self.current_row_ix]):
+            print('Reading white space...')
+            char = self.row_list[self.current_row_ix][pos]
+            pos += 1
