@@ -1,53 +1,47 @@
-# data/TransitionMatrixes/Operator_matrix.py
+# data/TransitionMatrixes/operator_matrix.py
 from enum import IntEnum
-import data.dictionary as dictionary
+import data.alphabet as alphabet
 
 class OperatorStates(IntEnum):
-    INI_STATE      = 1
-    STATE_A        = 2
-    STATE_INC      = 3
-    STATE_DEC      = 4
-    STATE_REL      = 5
-    STATE_REL_B    = 6
-    STATE_LOG_AND  = 7
-    STATE_LOG_OR   = 8
-    END_STATE      = 9
-
-numbers  = dictionary.dictionary['numbers']
-spaces   = dictionary.dictionary['spaces']
-operators   = dictionary.dictionary['oper_chars']
-all_chars_valid = ['@'] + list(dictionary.dictionary['numbers']) + dictionary.dictionary['spaces']
+    INI_STATE     = 1
+    PLUS    = 2
+    MINUS   = 3
+    REL_1   = 4   # '!', '<', '>', '='
+    AND_1   = 5   # '&'
+    OR_1    = 6   # '|'
+    END_STATE     = 7
 
 operator_matrix = {
     OperatorStates.INI_STATE: {
-        '+': OperatorStates.STATE_INC,
-        '-': OperatorStates.STATE_DEC,
-        **{char: OperatorStates.STATE_REL for char in ['!', '<', '>', '=']},
-        **{operator: OperatorStates.STATE_A for operator in ['*', '/']},
-        '&': OperatorStates.STATE_LOG_AND,
-        '|': OperatorStates.STATE_LOG_OR,
+        '+': OperatorStates.PLUS,
+        '-': OperatorStates.MINUS,
+        '*': OperatorStates.END_STATE,
+        '/': OperatorStates.END_STATE,
+        '!': OperatorStates.REL_1,
+        '<': OperatorStates.REL_1,
+        '>': OperatorStates.REL_1,
+        '=': OperatorStates.REL_1,
+        '&': OperatorStates.AND_1,
+        '|': OperatorStates.OR_1,
     },
-    OperatorStates.STATE_A: {
-        **{char: OperatorStates.END_STATE for char in all_chars_valid},
+
+    # intentamos formar operadores de dos caracteres; si no coincide, terminamos
+    OperatorStates.PLUS: {
+        '+': OperatorStates.END_STATE          # '++'
     },
-    OperatorStates.STATE_INC: {
-        '+': OperatorStates.END_STATE,
-        **{char: OperatorStates.END_STATE for char in all_chars_valid},
+    OperatorStates.MINUS: {
+        '-': OperatorStates.END_STATE          # '--'
     },
-    OperatorStates.STATE_DEC: {
-        '-': OperatorStates.END_STATE,
-        **{char: OperatorStates.END_STATE for char in all_chars_valid},
+    OperatorStates.REL_1: {
+        '=': OperatorStates.END_STATE          # '==', '!=', '<=', '>='
     },
-    OperatorStates.STATE_REL: {
-        '=': OperatorStates.END_STATE,
-        **{char: OperatorStates.END_STATE for char in all_chars_valid},
+    OperatorStates.AND_1: {
+        '&': OperatorStates.END_STATE          # '&&'
     },
-    OperatorStates.STATE_LOG_AND: {
-        '&': OperatorStates.END_STATE,
-        **{char: OperatorStates.END_STATE for char in all_chars_valid},
+    OperatorStates.OR_1: {
+        '|': OperatorStates.END_STATE          # '||'
     },
-    OperatorStates.STATE_LOG_OR: {
-        '|': OperatorStates.END_STATE,
-        **{char: OperatorStates.END_STATE for char in all_chars_valid},
-    },
+
+    # END_STATE no necesita transiciones
+    OperatorStates.END_STATE: {}
 }

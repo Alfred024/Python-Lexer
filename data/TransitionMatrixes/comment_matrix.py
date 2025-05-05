@@ -1,5 +1,5 @@
 from enum import IntEnum
-import data.dictionary as dictionary
+import data.alphabet as alphabet
 
 class CommentStates(IntEnum):
     INI_STATE = 1
@@ -8,11 +8,11 @@ class CommentStates(IntEnum):
 
 # Crear all_chars como una lista de caracteres individuales
 all_chars = (
-    list(dictionary.dictionary['chars']) +  # ['a', 'b', ..., 'Z']
-    list(dictionary.dictionary['numbers']) +  # ['0', '1', ..., '9']
-    list(dictionary.dictionary['delim_chars']) +  # ['(', ')', '{', '}', '.', ',']
-    list(dictionary.dictionary['oper_chars']) +  # ['+', '-', '*', '/', '=', ...]
-    dictionary.dictionary['spaces'] +  # ['\n', '\t', ' ']
+    list(alphabet.alphabet['chars']) +  # ['a', 'b', ..., 'Z']
+    list(alphabet.alphabet['numbers']) +  # ['0', '1', ..., '9']
+    list(alphabet.alphabet['delim_chars']) +  # ['(', ')', '{', '}', '.', ',']
+    list(alphabet.alphabet['oper_chars']) +  # ['+', '-', '*', '/', '=', ...]
+    alphabet.alphabet['spaces'] +  # ['\n', '\t', ' ']
     ['$', '@', '_']  # ['$', '@', '_']
 )
 

@@ -1,12 +1,12 @@
 # data/TransitionMatrixes/Delimitator_matrix.py
 from enum import IntEnum
-import data.dictionary as dictionary
+import data.alphabet as alphabet
 
 class DelimitatorStates(IntEnum):
     INI_STATE      = 1
     END_STATE      = 2
 
-delim_chars = dictionary.dictionary['delim_chars']
+delim_chars = alphabet.alphabet['delim_chars']
 
 delimitator_matrix = {
     DelimitatorStates.INI_STATE: {

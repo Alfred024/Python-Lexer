@@ -1,6 +1,7 @@
-@Num x = 10.
-@Text texto = "Hola Mundo".
-@Bool bandera = true.
+$ Esto es un comentario
+Num @x = 10.
+Text @texto = "Hola Mundo".
+Bool @bandera = true.
 
 If (x > 5) {
    Write("x es mayor a 5");
@@ -12,6 +13,6 @@ While (x < 20) {
    @x = @x + 1;
 }
 
-For (Num i = 0; i < 3; i = i + 1) {
+For (Num i = 0. i < 3. i = i + 1) {
    Write(i);
 }

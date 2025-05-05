@@ -1,4 +1,4 @@
-dictionary = {
+alphabet = {
     'delim_chars': '(){}.',
     'oper_chars': '+-*/=<>&|!',
     'chars': 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',

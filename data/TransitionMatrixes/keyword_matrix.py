@@ -1,5 +1,5 @@
 from enum import IntEnum
-import data.dictionary as dictionary
+import data.alphabet as alphabet
 
 class KeywordStates(IntEnum):
     INI_STATE = 1

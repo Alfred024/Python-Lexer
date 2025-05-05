@@ -1,7 +1,7 @@
 # Classes
 from classes.Token import Token, TokenCategory
 # Dictionary 📑
-import data.dictionary as dictionary
+import data.alphabet as alphabet
 # Transition matrixes 
     # Identifiers matrix
 from data.TransitionMatrixes.identifier_matrix import IdentifierStates
@@ -66,21 +66,21 @@ class Lexer:
                 keyword_matrix.keyword_matrix,
             )
             self.__read_keyword(lexeme)
-        elif char in dictionary.dictionary['delim_chars']:
+        elif char in alphabet.alphabet['delim_chars']:
             lexeme = self.__get_lexeme(
                 TokenCategory.DELIMITATOR,
                 DelimitatorStates,
                 delim_matrix.delimitator_matrix,
             )
             self.__read_delimitator(lexeme)
-        elif char in dictionary.dictionary['oper_chars']:
+        elif char in alphabet.alphabet['oper_chars']:
             lexeme = self.__get_lexeme(
                 TokenCategory.OPERATOR,
                 OperatorStates,
                 operator_matrix.operator_matrix,
             )
             self.__read_operator(lexeme)
-        elif char in dictionary.dictionary['spaces']:
+        elif char in alphabet.alphabet['spaces']:
             pass
         else:
             print(
@@ -88,28 +88,28 @@ class Lexer:
 
     def __get_lexeme(self, token_category: TokenCategory, token_category_states, token_category_matrix) -> str:
         lexeme = ""
-        state = token_category_states.INI_STATE 
-        
-        while self.current_col_ix < len(self.row_list[self.current_row_ix]): 
-            char = self.row_list[self.current_row_ix][self.current_col_ix]
+        state = token_category_states.INI_STATE
+        pos = self.current_col_ix
 
-            # Check if the state exists in the transition matrix
-            if(state != None):
-                state = token_category_matrix.get(state, {}).get(char) # Get new state lexeme
-                lexeme += char
-                if(state == token_category_states.END_STATE):
-                    break
-            else:
-                # TODO: CUando un identificador está malformado, entonces deben de recorrerse todos los caracteres consecuentes hasta llegar a un espacio en blanco. ¿Es esto una forma válida de asegurarnos que un lexema malformado se omita? Ahorita como está el programa me genera cosas errores, como con el identificador "@123invalid.", el print de los tokens me marca esto: 
-                print(
-                    f"⚠️ Error: Malformed {token_category} '{lexeme}' in column[{self.current_col_ix}], row[{self.current_row_ix + 1}]")
-                return ""
-            self.current_col_ix += 1
+        while pos < len(self.row_list[self.current_row_ix]):
+            char = self.row_list[self.current_row_ix][pos]
+            state  = token_category_matrix.get(state, {}).get(char)
 
-            # Para comentarios, detener si se alcanza END_STATE
+            if state is None:
+                print(f"⚠️ Error: Malformed {token_category} '{lexeme}' in column[{self.current_col_ix}], row[{self.current_row_ix + 1}]")
+                break
+
+            state  = state
+            lexeme += char
+            pos += 1
+
+            if state == token_category_states.END_STATE:
+                break
+
             if token_category == TokenCategory.COMMENT and state == CommentStates.END_STATE:
                 break
 
+        self.current_col_ix = pos - 1
         return lexeme
 
     def __read_identifier(self, lexeme):
@@ -126,7 +126,7 @@ class Lexer:
             TokenCategory.IDENTIFIER,
             lexeme,
             self.current_row_ix + 1,
-            self.current_col_ix - len(lexeme)
+            self.current_col_ix
         ))
 
     def __read_delimitator(self, lexeme):
@@ -148,7 +148,7 @@ class Lexer:
             Token(
                 token_category,
                 lexeme,
-                self.current_row_ix,
+                self.current_row_ix + 1,
                 self.current_col_ix,
             )
         )
@@ -174,30 +174,22 @@ class Lexer:
             Token(
                 token_category,
                 lexeme,
-                self.current_row_ix,
+                self.current_row_ix + 1,
                 self.current_col_ix,
             )
         )
     
     def __read_comment(self, lexeme: str):
-        # Validar que el lexema comienza con '$'
-        if not lexeme.startswith('$'):
-            print(
-                f"⚠️ Error: Invalid COMMENT '{lexeme}' in line {self.current_row_ix + 1}. Comments must start with '$'.")
-            return
-
-        # Validar longitud máxima (100 caracteres)
         if len(lexeme) > 100:
             print(f"⚠️ Error: COMMENT '{lexeme}' length is {len(lexeme)}. Comments must be 100 chars or less.")
             return
 
-        # Registrar el comentario como token
         print(f"✅ Token COMMENT valid: '{lexeme}' in line {self.current_row_ix + 1}")
         self.tokens.append(Token(
             TokenCategory.COMMENT,
             lexeme,
             self.current_row_ix + 1,
-            self.current_col_ix - len(lexeme)
+            self.current_col_ix
         ))
 
     def __read_keyword(self, lexeme: str) -> None:
@@ -216,7 +208,7 @@ class Lexer:
             TokenCategory.KEYWORD,
             lexeme,
             self.current_row_ix + 1,
-            self.current_col_ix - len(lexeme)
+            self.current_col_ix
         ))
     
     # TODO: Oski

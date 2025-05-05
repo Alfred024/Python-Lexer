@@ -1,6 +1,6 @@
 # data/TransitionMatrixes/identifier_matrix.py
 from enum import IntEnum
-import data.dictionary as dictionary
+import data.alphabet as alphabet
 
 class IdentifierStates(IntEnum):
     INI_STATE      = 1
@@ -8,9 +8,9 @@ class IdentifierStates(IntEnum):
     BODY_STATE     = 3
     END_STATE      = 4
 
-chars   = dictionary.dictionary['chars']
-numbers  = dictionary.dictionary['numbers']
-spaces  = dictionary.dictionary['spaces']
+chars   = alphabet.alphabet['chars']
+numbers  = alphabet.alphabet['numbers']
+spaces  = alphabet.alphabet['spaces']
 
 identifier_matrix = {
     IdentifierStates.INI_STATE: {
