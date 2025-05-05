@@ -22,6 +22,7 @@ import data.TransitionMatrixes.operator_matrix as operator_matrix
 class Lexer:
     def __init__(self, file_input: str):
         self.tokens: list[Token] = []
+        self.errors: list[dict] = []  # Lista para almacenar errores
         self.file_input = file_input
         self.current_row_ix = 0
         self.current_col_ix = 0
@@ -83,8 +84,12 @@ class Lexer:
         elif char in alphabet.alphabet['spaces']:
             pass
         else:
-            print(
-                f"⚠️ Error: Unrecognized character '{char}' in line {self.current_row_ix + 1}, column {self.current_col_ix}")
+            self.errors.append({
+                'tipo': 'Caracter no reconocido',
+                'mensaje': f"Caracter '{char}' no reconocido",
+                'linea': self.current_row_ix + 1,
+                'columna': self.current_col_ix
+            })
 
     def __get_lexeme(self, token_category: TokenCategory, token_category_states, token_category_matrix) -> str:
         lexeme = ""
@@ -96,7 +101,12 @@ class Lexer:
             state  = token_category_matrix.get(state, {}).get(char)
 
             if state is None:
-                print(f"⚠️ Error: Malformed {token_category} '{lexeme}' in column[{self.current_col_ix}], row[{self.current_row_ix + 1}]")
+                self.errors.append({
+                'tipo': f'Error en {token_category}',
+                'mensaje': f"Token malformado '{lexeme}'",
+                'linea': self.current_row_ix + 1,
+                'columna': self.current_col_ix
+            })
                 break
 
             state  = state
@@ -113,12 +123,22 @@ class Lexer:
         return lexeme
 
     def __read_identifier(self, lexeme):
-        if len(lexeme[1:]) > 16: # Validation of lenght counting the '@' char
-            print(f"⚠️ Error: IDENTIFIER '{lexeme}' lenght is {len(lexeme[1:])}. Lexeme must have 15 chars as maximum.")
+        if len(lexeme[1:]) > 16:
+            self.errors.append({
+                'tipo': 'Error de Identificador',
+                'mensaje': f"Identificador '{lexeme}' excede el límite de 15 caracteres",
+                'linea': self.current_row_ix + 1,
+                'columna': self.current_col_ix
+            })
             return
 
-        if lexeme[1:] in self.keywords: # Validation of no keyword lexeme
-            print(f"⚠️ Error: '{lexeme}' is a keyword.")
+        if lexeme[1:] in self.keywords:
+            self.errors.append({
+                'tipo': 'Error de Identificador',
+                'mensaje': f"'{lexeme}' es una palabra reservada",
+                'linea': self.current_row_ix + 1,
+                'columna': self.current_col_ix
+            })
             return
 
         print(f"✅ Token IDENTIFIER valid: '{lexeme}' in line {self.current_row_ix + 1}")
@@ -181,7 +201,12 @@ class Lexer:
     
     def __read_comment(self, lexeme: str):
         if len(lexeme) > 100:
-            print(f"⚠️ Error: COMMENT '{lexeme}' length is {len(lexeme)}. Comments must be 100 chars or less.")
+            self.errors.append({
+                'tipo': 'Error de Comentario',
+                'mensaje': f"El comentario excede el límite de 100 caracteres",
+                'linea': self.current_row_ix + 1,
+                'columna': self.current_col_ix
+            })
             return
 
         print(f"✅ Token COMMENT valid: '{lexeme}' in line {self.current_row_ix + 1}")
@@ -194,6 +219,15 @@ class Lexer:
 
     def __read_keyword(self, lexeme: str) -> None:
         if not lexeme:
+            return
+
+        if lexeme not in self.keywords:
+            self.errors.append({
+                'tipo': 'Error de Palabra Reservada',
+                'mensaje': f"'{lexeme}' no es una palabra reservada válida",
+                'linea': self.current_row_ix + 1,
+                'columna': self.current_col_ix
+            })
             return
 
         # Validar que el lexema es una palabra reservada
