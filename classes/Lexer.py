@@ -261,9 +261,9 @@ class Lexer:
             print(f"⚠️ Error: Malformed NUMBER '{lexeme}' in line {self.current_row_ix + 1}. Too many decimal points.")
             return
 
-        if lexeme.startswith('.') or lexeme.endswith('.'):
-            print(f"⚠️ Error: Malformed NUMBER '{lexeme}' in line {self.current_row_ix + 1}.")
-            return
+        # if lexeme.startswith('.') or lexeme.endswith('.'):
+        #     print(f"⚠️ Error: Malformed NUMBER '{lexeme}' in line {self.current_row_ix + 1}.")
+        #     return
 
         print(f"✅ Token NUMBER valid: '{lexeme}' in line {self.current_row_ix + 1}")
         self.tokens.append(Token(
