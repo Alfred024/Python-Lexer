@@ -9,7 +9,7 @@ If (x > 5) {
    Write("x es menor o igual a 5");
 }
 
-While (x < 20) {
+While (x < 20) {T
    @x = @x + 1;
 }
 

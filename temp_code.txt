@@ -1,1 +1,6 @@
+<<<<<<< HEAD
 @ola = 1o
+=======
+$esto es un comentario 
+Bool @x = False.
+>>>>>>> 6cd34a8 (Fix bug)

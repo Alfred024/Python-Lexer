@@ -234,7 +234,7 @@ class Lexer:
             })
             return
 
-        # Validar que el lexema es una palabra reservada
+        # TODO: Esta validación está duplicada
         if lexeme not in self.keywords:
             print(
                 f"⚠️ Error: Invalid KEYWORD '{lexeme}' in line {self.current_row_ix + 1}. Must be one of {self.keywords}.")
