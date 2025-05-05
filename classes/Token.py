@@ -1,5 +1,7 @@
 from enum import Enum
 
+var = "olas dpoisajdsa $ aosijda * asidjsa"
+
 class TokenCategory(Enum):
     IDENTIFIER = "IDENTIFIER"
     KEYWORD = "KEYWORD"

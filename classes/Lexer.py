@@ -21,6 +21,9 @@ import data.TransitionMatrixes.operator_matrix as operator_matrix
     # Number matrix
 from data.TransitionMatrixes.number_matrix import NumberStates
 import data.TransitionMatrixes.number_matrix as number_matrix
+    # Text matrix
+from data.TransitionMatrixes.text_matrix import TextStates
+import data.TransitionMatrixes.text_matrix as text_matrix
 
 
 class Lexer:
@@ -90,11 +93,19 @@ class Lexer:
         elif char in alphabet.alphabet['numbers']:
             lexeme = self.__get_lexeme(
                 TokenCategory.NUM,
-                number_matrix.NumberStates,
+                NumberStates,
                 number_matrix.number_matrix,
             )
             self.__read_number(lexeme)
+        elif char == '"' or char == "'":
+            lexeme = self.__get_lexeme(
+                TokenCategory.TEXT,
+                TextStates,
+                text_matrix.text_matrix,
+            )
+            self.__read_text(lexeme)
         else:
+            # TODO: Va anexando el valor del char al Token que mostrará como MALFORMED
             self.errors.append({
                 'tipo': 'Caracter no reconocido',
                 'mensaje': f"Caracter '{char}' no reconocido",
@@ -112,12 +123,12 @@ class Lexer:
             state  = token_category_matrix.get(state, {}).get(char)
 
             if state is None:
-                self.errors.append({
-                'tipo': f'Error en {token_category}',
-                'mensaje': f"Token malformado '{lexeme}'",
-                'linea': self.current_row_ix + 1,
-                'columna': self.current_col_ix
-            })
+                # self.errors.append({
+                #     'tipo': f'Error en {token_category}',
+                #     'mensaje': f"Token malformado '{lexeme}'",
+                #     'linea': self.current_row_ix + 1,
+                #     'columna': self.current_col_ix
+                # })
                 break
 
             state  = state
@@ -247,6 +258,16 @@ class Lexer:
                 f"⚠️ Error: Invalid KEYWORD '{lexeme}' in line {self.current_row_ix + 1}. Must be one of {self.keywords}.")
             return
 
+        if lexeme in ['True', 'False']:
+            print(f"✅ Token BOOL valid: '{lexeme}' in line {self.current_row_ix + 1}")
+            self.tokens.append(Token(
+                TokenCategory.BOOL,
+                lexeme,
+                self.current_row_ix + 1,
+                self.current_col_ix
+            ))
+            return
+
         # Registrar la palabra reservada como token
         print(f"✅ Token KEYWORD valid: '{lexeme}' in line {self.current_row_ix + 1}")
         self.tokens.append(Token(
@@ -257,17 +278,21 @@ class Lexer:
         ))
     
     def __read_number(self, lexeme: str) -> None:
-        if lexeme.count('.') > 1:
-            print(f"⚠️ Error: Malformed NUMBER '{lexeme}' in line {self.current_row_ix + 1}. Too many decimal points.")
-            return
-
-        # if lexeme.startswith('.') or lexeme.endswith('.'):
-        #     print(f"⚠️ Error: Malformed NUMBER '{lexeme}' in line {self.current_row_ix + 1}.")
-        #     return
-
         print(f"✅ Token NUMBER valid: '{lexeme}' in line {self.current_row_ix + 1}")
         self.tokens.append(Token(
             TokenCategory.NUM,
+            lexeme,
+            self.current_row_ix + 1,
+            self.current_col_ix
+        ))
+
+    def __read_whitespace():
+        pass
+    
+    def __read_text(self, lexeme: str) -> None:
+        print(f"✅ Token TEXT valid: '{lexeme}' in line {self.current_row_ix + 1}")
+        self.tokens.append(Token(
+            TokenCategory.TEXT,
             lexeme,
             self.current_row_ix + 1,
             self.current_col_ix
