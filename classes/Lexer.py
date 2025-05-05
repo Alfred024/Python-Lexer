@@ -18,6 +18,10 @@ import data.TransitionMatrixes.keyword_matrix as keyword_matrix
     # Operators matrix
 from data.TransitionMatrixes.operator_matrix import OperatorStates
 import data.TransitionMatrixes.operator_matrix as operator_matrix
+    # Number matrix
+from data.TransitionMatrixes.number_matrix import NumberStates
+import data.TransitionMatrixes.number_matrix as number_matrix
+
 
 class Lexer:
     def __init__(self, file_input: str):
@@ -82,6 +86,13 @@ class Lexer:
             self.__read_operator(lexeme)
         elif char in alphabet.alphabet['spaces']:
             pass
+        elif char in alphabet.alphabet['numbers']:
+            lexeme = self.__get_lexeme(
+                TokenCategory.NUM,
+                number_matrix.NumberStates,
+                number_matrix.number_matrix,
+            )
+            self.__read_number(lexeme)
         else:
             print(
                 f"⚠️ Error: Unrecognized character '{char}' in line {self.current_row_ix + 1}, column {self.current_col_ix}")
@@ -211,6 +222,19 @@ class Lexer:
             self.current_col_ix
         ))
     
-    # TODO: Oski
-    def __read_number(self):
-        pass
+    def __read_number(self, lexeme: str) -> None:
+        if lexeme.count('.') > 1:
+            print(f"⚠️ Error: Malformed NUMBER '{lexeme}' in line {self.current_row_ix + 1}. Too many decimal points.")
+            return
+
+        if lexeme.startswith('.') or lexeme.endswith('.'):
+            print(f"⚠️ Error: Malformed NUMBER '{lexeme}' in line {self.current_row_ix + 1}.")
+            return
+
+        print(f"✅ Token NUMBER valid: '{lexeme}' in line {self.current_row_ix + 1}")
+        self.tokens.append(Token(
+            TokenCategory.NUM,
+            lexeme,
+            self.current_row_ix + 1,
+            self.current_col_ix
+        ))
