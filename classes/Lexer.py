@@ -86,6 +86,7 @@ class Lexer:
         elif char in alphabet.alphabet['numbers']:
             pass
         else:
+            # TODO: Mientras le sigan entrando caracteres fuera de los casos contempados, sigue acumulando el lexema para ir  formando el Token inválido
             self.errors.append({
                 'tipo': 'Char don´t recognize in alpahber',
                 'mensaje': f"Caracter '{char}' no reconocido",
@@ -99,8 +100,8 @@ class Lexer:
         pos = self.current_col_ix
 
         while pos < len(self.row_list[self.current_row_ix]):
-            print(f'Voy a buscar el char {char} en el state {state}')
             char = self.row_list[self.current_row_ix][pos]
+            print(f'Voy a buscar el char {char} en el state {state}')
             state  = token_category_matrix.get(state, {}).get(char)
 
             if state is None:
@@ -109,7 +110,7 @@ class Lexer:
                 'mensaje': f"Token malformado '{lexeme}'",
                 'linea': self.current_row_ix + 1,
                 'columna': self.current_col_ix
-            })
+                })
                 break
 
             state  = state
