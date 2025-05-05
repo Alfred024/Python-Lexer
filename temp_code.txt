@@ -1,0 +1,4 @@
+$ Esto es un comentario
+Num @x = 10.
+Text @texto = "Hola Mundo".
+Bool @banera = false.
