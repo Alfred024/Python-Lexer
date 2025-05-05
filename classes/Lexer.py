@@ -89,6 +89,8 @@ class Lexer:
             )
             self.__read_operator(lexeme)
         elif char in alphabet.alphabet['spaces']:
+            self.__read_whitespace()
+        elif char in alphabet.alphabet['numbers']:
             pass
         elif char in alphabet.alphabet['numbers']:
             lexeme = self.__get_lexeme(
@@ -105,9 +107,9 @@ class Lexer:
             )
             self.__read_text(lexeme)
         else:
-            # TODO: Va anexando el valor del char al Token que mostrará como MALFORMED
+            # TODO: Mientras le sigan entrando caracteres fuera de los casos contempados, sigue acumulando el lexema para ir  formando el Token inválido
             self.errors.append({
-                'tipo': 'Caracter no reconocido',
+                'tipo': 'Char don´t recognize in alpahber',
                 'mensaje': f"Caracter '{char}' no reconocido",
                 'linea': self.current_row_ix + 1,
                 'columna': self.current_col_ix
@@ -120,6 +122,7 @@ class Lexer:
 
         while pos < len(self.row_list[self.current_row_ix]):
             char = self.row_list[self.current_row_ix][pos]
+            print(f'Voy a buscar el char {char} en el state {state}')
             state  = token_category_matrix.get(state, {}).get(char)
 
             if state is None:
@@ -252,7 +255,7 @@ class Lexer:
             })
             return
 
-        # Validar que el lexema es una palabra reservada
+        # TODO: Esta validación está duplicada
         if lexeme not in self.keywords:
             print(
                 f"⚠️ Error: Invalid KEYWORD '{lexeme}' in line {self.current_row_ix + 1}. Must be one of {self.keywords}.")
@@ -286,9 +289,6 @@ class Lexer:
             self.current_col_ix
         ))
 
-    def __read_whitespace():
-        pass
-    
     def __read_text(self, lexeme: str) -> None:
         print(f"✅ Token TEXT valid: '{lexeme}' in line {self.current_row_ix + 1}")
         self.tokens.append(Token(
@@ -297,3 +297,11 @@ class Lexer:
             self.current_row_ix + 1,
             self.current_col_ix
         ))
+    def __read_whitespace(self):
+        pos = self.current_col_ix
+        char = self.row_list[self.current_row_ix][pos]
+        
+        while char in alphabet.alphabet['spaces'] and pos < len(self.row_list[self.current_row_ix]):
+            print('Reading white space...')
+            char = self.row_list[self.current_row_ix][pos]
+            pos += 1
