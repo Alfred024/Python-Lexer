@@ -1,6 +1,19 @@
 from enum import Enum
 
-var = "olas dpoisajdsa $ aosijda * asidjsa"
+class TokenError:
+    def __init__(self, error_type: str, message: str, line: int, column: int) -> None:
+        self._type = error_type
+        self._message = message
+        self._line = line
+        self._column = column
+
+    def __str__(self) -> str:
+        return (
+            f"TokenError(type='{self._type}', "
+            f"message='{self._message}', "
+            f"line={self._line}, "
+            f"column={self._column})"
+        )
 
 class TokenCategory(Enum):
     IDENTIFIER = "IDENTIFIER"

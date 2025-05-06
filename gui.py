@@ -38,9 +38,9 @@ class CustomText(tk.Text):
         # Patrones para resaltado
         patterns = {
             "comment": r"\$.*$",
-            "keyword": r"\b(Num|Text|Bool|If|Else|While|For|Write|Read|true|false)\b",
+            "keyword": r"\b(Num|Text|Bool|If|Else|While|For|Write|Read|True|False)\b",
             "identifier": r"@\w+",
-            "operator": r"[=+\-*/<>]",
+            "operator": r"[=+\-*/<>.]",
             "number": r"\b\d+(\.\d+)?\b",
             "string": r'"[^"]*"'
         }
@@ -89,12 +89,12 @@ class LexerGUI:
         self.token_frame = ttk.LabelFrame(root, text="Pila de Tokens")
         self.token_frame.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
         
-        self.token_tree = ttk.Treeview(self.token_frame, columns=("Tipo", "Valor", "Línea", "Columna"))
+        self.token_tree = ttk.Treeview(self.token_frame, columns=("Type", "Value", "Line", "Column"))
         self.token_tree.heading("#0", text="")
-        self.token_tree.heading("Tipo", text="Tipo")
-        self.token_tree.heading("Valor", text="Valor")
-        self.token_tree.heading("Línea", text="Línea")
-        self.token_tree.heading("Columna", text="Columna")
+        self.token_tree.heading("Type", text="Type")
+        self.token_tree.heading("Value", text="Value")
+        self.token_tree.heading("Line", text="Line")
+        self.token_tree.heading("Column", text="Column")
         self.token_tree.column("#0", width=0, stretch=tk.NO)
         self.token_tree.pack(expand=True, fill="both", padx=5, pady=5)
         
@@ -102,12 +102,12 @@ class LexerGUI:
         self.error_frame = ttk.LabelFrame(root, text="Pila de Errores")
         self.error_frame.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="nsew")
         
-        self.error_tree = ttk.Treeview(self.error_frame, columns=("Tipo", "Mensaje", "Línea", "Columna"))
+        self.error_tree = ttk.Treeview(self.error_frame, columns=("Type", "Message", "Line", "Column"))
         self.error_tree.heading("#0", text="")
-        self.error_tree.heading("Tipo", text="Tipo")
-        self.error_tree.heading("Mensaje", text="Mensaje")
-        self.error_tree.heading("Línea", text="Línea")
-        self.error_tree.heading("Columna", text="Columna")
+        self.error_tree.heading("Type", text="Type")
+        self.error_tree.heading("Message", text="Message")
+        self.error_tree.heading("Line", text="Line")
+        self.error_tree.heading("Column", text="Column")
         self.error_tree.column("#0", width=0, stretch=tk.NO)
         self.error_tree.pack(expand=True, fill="both", padx=5, pady=5)
         
@@ -141,12 +141,14 @@ class LexerGUI:
             
         # Mostrar errores en el árbol de errores
         for error in lexer.errors:
-            self.error_tree.insert("", tk.END, values=(
-                error['tipo'],
-                error['mensaje'],
-                error['linea'],
-                error['columna']
-            ))
+            self.error_tree.insert("", tk.END, 
+                values=(
+                    error._type,
+                    error._message,
+                    error._line,
+                    error._column,
+                )
+            )
 
 if __name__ == "__main__":
     root = tk.Tk()

@@ -1,5 +1,5 @@
 # Classes
-from classes.Token import Token, TokenCategory
+from classes.Token import Token, TokenCategory, TokenError
 # Dictionary 📑
 import data.alphabet as alphabet
 # Transition matrixes 
@@ -29,7 +29,7 @@ import data.TransitionMatrixes.text_matrix as text_matrix
 class Lexer:
     def __init__(self, file_input: str):
         self.tokens: list[Token] = []
-        self.errors: list[dict] = []  # Lista para almacenar errores
+        self.errors: list[TokenError] = []
         self.file_input = file_input
         self.current_row_ix = 0
         self.current_col_ix = 0
@@ -67,7 +67,7 @@ class Lexer:
                 comment_matrix.comment_matrix,
             )
             self.__read_comment(lexeme)
-        elif char in 'NTBWFIER':  # Primeras letras de palabras reservadas
+        elif char in 'NTBWFIER': # Keywords first letters
             lexeme = self.__get_lexeme(
                 TokenCategory.KEYWORD,
                 KeywordStates.INI_STATE,
@@ -91,15 +91,13 @@ class Lexer:
         elif char in alphabet.alphabet['spaces']:
             self.__read_whitespace()
         elif char in alphabet.alphabet['numbers']:
-            pass
-        elif char in alphabet.alphabet['numbers']:
             lexeme = self.__get_lexeme(
                 TokenCategory.NUM,
                 NumberStates,
                 number_matrix.number_matrix,
             )
             self.__read_number(lexeme)
-        elif char == '"' or char == "'":
+        elif char in alphabet.alphabet['text_delims']:
             lexeme = self.__get_lexeme(
                 TokenCategory.TEXT,
                 TextStates,
@@ -107,13 +105,14 @@ class Lexer:
             )
             self.__read_text(lexeme)
         else:
-            # TODO: Mientras le sigan entrando caracteres fuera de los casos contempados, sigue acumulando el lexema para ir  formando el Token inválido
-            self.errors.append({
-                'tipo': 'Char don´t recognize in alpahber',
-                'mensaje': f"Caracter '{char}' no reconocido",
-                'linea': self.current_row_ix + 1,
-                'columna': self.current_col_ix
-            })
+            self.errors.append(
+                TokenError(
+                    error_type='Identifier Error',
+                    message=f'Char "{char}" don´t recognize in alpahber',
+                    line=self.current_row_ix + 1,
+                    column=self.current_col_ix,
+                )
+            )
 
     def __get_lexeme(self, token_category: TokenCategory, token_category_states, token_category_matrix) -> str:
         lexeme = ""
@@ -122,16 +121,9 @@ class Lexer:
 
         while pos < len(self.row_list[self.current_row_ix]):
             char = self.row_list[self.current_row_ix][pos]
-            print(f'Voy a buscar el char {char} en el state {state}')
             state  = token_category_matrix.get(state, {}).get(char)
 
             if state is None:
-                # self.errors.append({
-                #     'tipo': f'Error en {token_category}',
-                #     'mensaje': f"Token malformado '{lexeme}'",
-                #     'linea': self.current_row_ix + 1,
-                #     'columna': self.current_col_ix
-                # })
                 break
 
             state  = state
@@ -147,35 +139,61 @@ class Lexer:
         self.current_col_ix = pos - 1
         return lexeme
 
+    def __get_malformed_lexeme(self):
+        lexeme = ""
+        pos = self.current_col_ix
+        char = self.row_list[self.current_row_ix][pos]
+
+        while char != alphabet.alphabet['spaces'] and pos < len(self.row_list[self.current_row_ix]):
+            lexeme += char
+            pos += 1
+        self.current_col_ix = pos - 1
+        return lexeme
+
     def __read_identifier(self, lexeme):
         if len(lexeme[1:]) > 16:
-            self.errors.append({
-                'tipo': 'Error de Identificador',
-                'mensaje': f"Identificador '{lexeme}' excede el límite de 15 caracteres",
-                'linea': self.current_row_ix + 1,
-                'columna': self.current_col_ix
-            })
+            self.errors.append(
+                TokenError(
+                    error_type='Identifier Error',
+                    message=f"Identifier '{lexeme}' exceed 15 chars limit.",
+                    line=self.current_row_ix + 1,
+                    column=self.current_col_ix,
+                )
+            )
+            return
+        
+        if len(lexeme[1:]) == 1:
+            self.errors.append(
+                TokenError(
+                    error_type='Identifier Error',
+                    message=f"Identifier '{lexeme}' must contain least one char.",
+                    line=self.current_row_ix + 1,
+                    column=self.current_col_ix,
+                )
+            )
             return
 
         if lexeme[1:] in self.keywords:
-            self.errors.append({
-                'tipo': 'Error de Identificador',
-                'mensaje': f"'{lexeme}' es una palabra reservada",
-                'linea': self.current_row_ix + 1,
-                'columna': self.current_col_ix
-            })
+            self.errors.append(
+                TokenError(
+                    error_type='Identifier Error',
+                    message=f"'{lexeme}' isn´t a keyword.",
+                    line=self.current_row_ix + 1,
+                    column=self.current_col_ix,
+                )
+            )
             return
 
-        print(f"✅ Token IDENTIFIER valid: '{lexeme}' in line {self.current_row_ix + 1}")
-        self.tokens.append(Token( #Si todo esta bien lo guardamos en el token
-            TokenCategory.IDENTIFIER,
-            lexeme,
-            self.current_row_ix + 1,
-            self.current_col_ix
-        ))
+        self.tokens.append(
+            Token(
+                TokenCategory.IDENTIFIER,
+                lexeme,
+                self.current_row_ix + 1,
+                self.current_col_ix
+            )
+        )
 
     def __read_delimitator(self, lexeme):
-        print(f"✅ Token DELIMITATOR valid: '{lexeme}' in line {self.current_row_ix + 1}")
         token_category : TokenCategory
                 
         if(lexeme == '('):
@@ -199,7 +217,6 @@ class Lexer:
         )
 
     def __read_operator(self, lexeme):
-        print(f"✅ Token OPERATOR valid: '{lexeme}' in line {self.current_row_ix + 1}")
         token_category : TokenCategory
                 
         if(lexeme in ['+', '-', '*', '/']):
@@ -234,7 +251,6 @@ class Lexer:
             })
             return
 
-        print(f"✅ Token COMMENT valid: '{lexeme}' in line {self.current_row_ix + 1}")
         self.tokens.append(Token(
             TokenCategory.COMMENT,
             lexeme,
@@ -247,22 +263,17 @@ class Lexer:
             return
 
         if lexeme not in self.keywords:
-            self.errors.append({
-                'tipo': 'Error de Palabra Reservada',
-                'mensaje': f"'{lexeme}' no es una palabra reservada válida",
-                'linea': self.current_row_ix + 1,
-                'columna': self.current_col_ix
-            })
-            return
-
-        # TODO: Esta validación está duplicada
-        if lexeme not in self.keywords:
-            print(
-                f"⚠️ Error: Invalid KEYWORD '{lexeme}' in line {self.current_row_ix + 1}. Must be one of {self.keywords}.")
+            self.errors.append(
+                TokenError(
+                    error_type='Keyword Error',
+                    message=f"'{lexeme}' isn´t a keyword.",
+                    line=self.current_row_ix + 1,
+                    column=self.current_col_ix,
+                )
+            )
             return
 
         if lexeme in ['True', 'False']:
-            print(f"✅ Token BOOL valid: '{lexeme}' in line {self.current_row_ix + 1}")
             self.tokens.append(Token(
                 TokenCategory.BOOL,
                 lexeme,
@@ -271,8 +282,6 @@ class Lexer:
             ))
             return
 
-        # Registrar la palabra reservada como token
-        print(f"✅ Token KEYWORD valid: '{lexeme}' in line {self.current_row_ix + 1}")
         self.tokens.append(Token(
             TokenCategory.KEYWORD,
             lexeme,
@@ -281,7 +290,6 @@ class Lexer:
         ))
     
     def __read_number(self, lexeme: str) -> None:
-        print(f"✅ Token NUMBER valid: '{lexeme}' in line {self.current_row_ix + 1}")
         self.tokens.append(Token(
             TokenCategory.NUM,
             lexeme,
@@ -290,18 +298,17 @@ class Lexer:
         ))
 
     def __read_text(self, lexeme: str) -> None:
-        print(f"✅ Token TEXT valid: '{lexeme}' in line {self.current_row_ix + 1}")
         self.tokens.append(Token(
             TokenCategory.TEXT,
             lexeme,
             self.current_row_ix + 1,
             self.current_col_ix
         ))
+    
     def __read_whitespace(self):
         pos = self.current_col_ix
         char = self.row_list[self.current_row_ix][pos]
-        
+
         while char in alphabet.alphabet['spaces'] and pos < len(self.row_list[self.current_row_ix]):
-            print('Reading white space...')
             char = self.row_list[self.current_row_ix][pos]
             pos += 1
