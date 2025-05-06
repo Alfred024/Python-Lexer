@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Classes
-from classes.Token import Token, TokenCategory, TokenError
+from classes.Token import Token, TokenCategory, TokenCode, TokenError
 from classes.SymbolTable import SymbolTable
 # Dictionary 📑
 import data.alphabet as alphabet
@@ -154,7 +154,9 @@ class Lexer:
             ))
             return
 
-        tok = Token(TokenCategory.IDENTIFIER,
+        tok = Token(
+                    TokenCategory.IDENTIFIER,
+                    TokenCode.IDENTIFIER,
                     lexeme,
                     self.current_row_ix + 1,
                     self.current_col_ix)
@@ -186,14 +188,26 @@ class Lexer:
 
 
     def __read_delimitator(self, lexeme):
-        mapping = {
+        token_categories = {
             '(': TokenCategory.DELIM_PARENT_LEFT,
             ')': TokenCategory.DELIM_PARENT_RIGHT,
             '{': TokenCategory.DELIM_BRACE_LEFT,
             '}': TokenCategory.DELIM_BRACE_RIGHT,
             '.': TokenCategory.DELIM_POINT
         }
-        tok = Token(mapping[lexeme], lexeme,
+        
+        token_codes = {
+            '(': TokenCode.DELIM_PARENT_LEFT,
+            ')': TokenCode.DELIM_PARENT_RIGHT,
+            '{': TokenCode.DELIM_BRACE_LEFT,
+            '}': TokenCode.DELIM_BRACE_RIGHT,
+            '.': TokenCode.DELIM_POINT
+        }
+        
+        tok = Token(
+                    token_categories[lexeme], 
+                    token_codes[lexeme],
+                    lexeme,
                     self.current_row_ix + 1,
                     self.current_col_ix)
         self.symtab.add_token(tok)
@@ -212,12 +226,18 @@ class Lexer:
         else:
             tk = TokenCategory.DEC_OPER
 
-        self.symtab.add_token(Token(tk, lexeme,
+        self.symtab.add_token(Token(
+                                    tk, 
+                                    TokenCode.OPERATOR,
+                                    lexeme,
                                     self.current_row_ix + 1,
                                     self.current_col_ix))
 
     def __read_comment(self, lexeme):
-        self.symtab.add_token(Token(TokenCategory.COMMENT, lexeme,
+        self.symtab.add_token(Token(
+                                    TokenCategory.COMMENT, 
+                                    TokenCode.COMMENT,
+                                    lexeme,
                                     self.current_row_ix + 1,
                                     self.current_col_ix))
 
@@ -233,17 +253,26 @@ class Lexer:
 
         tk_type = TokenCategory.BOOL if lexeme in ['True', 'False'] \
                   else TokenCategory.KEYWORD
-        self.symtab.add_token(Token(tk_type, lexeme,
+        tk_code = TokenCode.BOOL if lexeme in ['True', 'False'] \
+                  else TokenCode.KEYWORD      
+            
+        self.symtab.add_token(Token(tk_type, 
+                                    tk_code,    
+                                    lexeme,
                                     self.current_row_ix + 1,
                                     self.current_col_ix))
 
     def __read_number(self, lexeme):
-        self.symtab.add_token(Token(TokenCategory.NUM, lexeme,
+        self.symtab.add_token(Token(TokenCategory.NUM, 
+                                    TokenCode.NUM,
+                                    lexeme,
                                     self.current_row_ix + 1,
                                     self.current_col_ix))
 
     def __read_text(self, lexeme):
-        self.symtab.add_token(Token(TokenCategory.TEXT, lexeme,
+        self.symtab.add_token(Token(TokenCategory.TEXT, 
+                                    TokenCode.TEXT,
+                                    lexeme,
                                     self.current_row_ix + 1,
                                     self.current_col_ix))
 

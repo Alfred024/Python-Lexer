@@ -10,6 +10,8 @@ class SymbolInfo:
     def __repr__(self):
         return f"SymbolInfo(name={self.name!r}, type={self.var_type!r}, line={self.declared_line})"
 
+# TODO: Añadir método clean
+# TODO: Añadir inicuialización de los valores de las variables
 
 class SymbolTable:
     def __init__(self):

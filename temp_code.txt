@@ -3,7 +3,7 @@ Num @x = 10.
 Text @texto = "Hola Mundo".
 Bool @bandera = True.
 
-If (sadsax > 5) {
+If (x > 5) {
    Write("x es mayor a 5");
 } Else {
    Write("x es menor o igual a 5");

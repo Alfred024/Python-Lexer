@@ -96,8 +96,8 @@ class LexerGUI:
             columns=("Type", "Value", "Line", "Column"),
             show="headings"
         )
-        for col in ("Type", "Value", "Line", "Column"):
-            self.token_tree.heading(col, text=col)
+        for column in ("Type", "Value", "Line", "Column"):
+            self.token_tree.heading(column, text=column)
         self.token_tree.pack(expand=True, fill="both", padx=5, pady=5)
 
         # ── Vista tabla de símbolos ────────────────────────────────────────
@@ -109,8 +109,8 @@ class LexerGUI:
             columns=("Name", "VarType", "Line"),
             show="headings"
         )
-        for col in ("Name", "VarType", "Line"):
-            self.sym_tree.heading(col, text=col)
+        for column in ("Name", "VarType", "Line"):
+            self.sym_tree.heading(column, text=column)
         self.sym_tree.pack(expand=True, fill="both", padx=5, pady=5)
 
         # ── Vista de errores ───────────────────────────────────────────────
@@ -122,8 +122,8 @@ class LexerGUI:
             columns=("Type", "Message", "Line", "Column"),
             show="headings"
         )
-        for col in ("Type", "Message", "Line", "Column"):
-            self.error_tree.heading(col, text=col)
+        for column in ("Type", "Message", "Line", "Column"):
+            self.error_tree.heading(column, text=column)
         self.error_tree.pack(expand=True, fill="both", padx=5, pady=5)
 
     # ───────────────────────── Actualizar GUI ─────────────────────────────
@@ -147,7 +147,7 @@ class LexerGUI:
                 tok.category.value,
                 tok.value,
                 tok.row,
-                tok.col
+                tok.column
             ))
 
         # ── Símbolos (identificadores declarados)
