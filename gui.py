@@ -12,7 +12,7 @@ class CustomText(tk.Text):
         self.tag_configure("comment", foreground="#65B741")    # Verde suave para comentarios
         self.tag_configure("keyword", foreground="#3559E0")    # Azul medio para palabras clave
         self.tag_configure("identifier", foreground="#FF6B6B") # Rojo coral para identificadores
-        self.tag_configure("operator", foreground="#FF9843")   # Naranja suave para operadores
+        self.tag_configure("operator", foreground="#00FF00")   # Naranja suave para operadores
         self.tag_configure("number", foreground="#B15EFF")     # Violeta suave para números
         self.tag_configure("string", foreground="#4F709C")     # Azul grisáceo para strings
         self.tag_configure("error", background="#FFE4E4")      # Rojo muy claro para errores
@@ -71,7 +71,7 @@ class LexerGUI:
         self.root.configure(bg="#F5F5F5")
         
         # Editor de código (lado izquierdo)
-        self.code_frame = ttk.LabelFrame(root, text="Editor de Código")
+        self.code_frame = ttk.LabelFrame(root, text="Code Editor")
         self.code_frame.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
         
         # Usar CustomText con fondo blanco
@@ -86,7 +86,7 @@ class LexerGUI:
         self.code_editor.configure(yscrollcommand=code_scrollbar.set)
         
         # Pila de tokens (lado derecho)
-        self.token_frame = ttk.LabelFrame(root, text="Pila de Tokens")
+        self.token_frame = ttk.LabelFrame(root, text="Symbols table")
         self.token_frame.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
         
         self.token_tree = ttk.Treeview(self.token_frame, columns=("Type", "Value", "Line", "Column"))
@@ -99,7 +99,7 @@ class LexerGUI:
         self.token_tree.pack(expand=True, fill="both", padx=5, pady=5)
         
         # Panel de errores (abajo)
-        self.error_frame = ttk.LabelFrame(root, text="Pila de Errores")
+        self.error_frame = ttk.LabelFrame(root, text="Errors Stack")
         self.error_frame.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="nsew")
         
         self.error_tree = ttk.Treeview(self.error_frame, columns=("Type", "Message", "Line", "Column"))

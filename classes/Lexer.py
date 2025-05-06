@@ -105,10 +105,11 @@ class Lexer:
             )
             self.__read_text(lexeme)
         else:
+            lexeme = self.__get_malformed_lexeme()
             self.errors.append(
                 TokenError(
-                    error_type='Identifier Error',
-                    message=f'Char "{char}" don´t recognize in alpahber',
+                    error_type=f'token_category Error',
+                    message=f'The lexeme "{lexeme}" of category "token_category" is malformed',
                     line=self.current_row_ix + 1,
                     column=self.current_col_ix,
                 )
@@ -126,7 +127,6 @@ class Lexer:
             if state is None:
                 break
 
-            state  = state
             lexeme += char
             pos += 1
 
@@ -142,11 +142,16 @@ class Lexer:
     def __get_malformed_lexeme(self):
         lexeme = ""
         pos = self.current_col_ix
-        char = self.row_list[self.current_row_ix][pos]
 
-        while char != alphabet.alphabet['spaces'] and pos < len(self.row_list[self.current_row_ix]):
+        while pos < len(self.row_list[self.current_row_ix]):
+            char = self.row_list[self.current_row_ix][pos]
             lexeme += char
             pos += 1
+            
+            if (char in alphabet.alphabet['spaces'] ):
+                self.current_col_ix = pos - 1
+                return lexeme
+            
         self.current_col_ix = pos - 1
         return lexeme
 
@@ -154,8 +159,8 @@ class Lexer:
         if len(lexeme[1:]) > 16:
             self.errors.append(
                 TokenError(
-                    error_type='Identifier Error',
-                    message=f"Identifier '{lexeme}' exceed 15 chars limit.",
+                    error_type=f'{TokenCategory.IDENTIFIER} Error',
+                    message=f" '{lexeme}' exceed 15 chars limit.",
                     line=self.current_row_ix + 1,
                     column=self.current_col_ix,
                 )
@@ -165,8 +170,8 @@ class Lexer:
         if len(lexeme[1:]) == 1:
             self.errors.append(
                 TokenError(
-                    error_type='Identifier Error',
-                    message=f"Identifier '{lexeme}' must contain least one char.",
+                    error_type=f'{TokenCategory.IDENTIFIER} Error',
+                    message=f" '{lexeme}' must contain least one char.",
                     line=self.current_row_ix + 1,
                     column=self.current_col_ix,
                 )
@@ -176,7 +181,7 @@ class Lexer:
         if lexeme[1:] in self.keywords:
             self.errors.append(
                 TokenError(
-                    error_type='Identifier Error',
+                    error_type=f'{TokenCategory.IDENTIFIER} Error',
                     message=f"'{lexeme}' isn´t a keyword.",
                     line=self.current_row_ix + 1,
                     column=self.current_col_ix,
@@ -242,15 +247,6 @@ class Lexer:
         )
     
     def __read_comment(self, lexeme: str):
-        if len(lexeme) > 100:
-            self.errors.append({
-                'tipo': 'Error de Comentario',
-                'mensaje': f"El comentario excede el límite de 100 caracteres",
-                'linea': self.current_row_ix + 1,
-                'columna': self.current_col_ix
-            })
-            return
-
         self.tokens.append(Token(
             TokenCategory.COMMENT,
             lexeme,

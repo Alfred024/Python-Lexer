@@ -1,7 +1,8 @@
 alphabet = {
     'delim_chars': '(){}.',
     'oper_chars': '+-*/=<>&|!',
+    'spaces': ['\n', '\t', ' '],
     'chars': 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
     'numbers': '0123456789',
-    'spaces': ['\n', '\t', ' '],
+    'text_delims': '"'
 }
