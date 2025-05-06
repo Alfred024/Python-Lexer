@@ -11,8 +11,8 @@ if __name__ == "__main__":
     root.geometry("1200x800")
     root.mainloop()
     
-    # Token creation    
-    lexer = Lexer(project_config['sample_code_file'])
+    # # Token creation    
+    # lexer = Lexer(project_config['sample_code_file'])
     # for token in lexer.tokens:
     #     print(token)
         
