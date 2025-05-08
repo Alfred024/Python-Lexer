@@ -18,9 +18,44 @@ class CustomText(tk.Text):
         self.tag_configure("operator",   foreground="#00FF00")
         self.tag_configure("number",     foreground="#B15EFF")
         self.tag_configure("string",     foreground="#4F709C")
-        self.tag_configure("error",      background="#FFE4E4")
+        self.tag_configure("error_line", background="#FFE4E4")  # Fondo rojo claro para líneas con error
+        self.tag_configure("error_char", background="#FF9999")  # Rojo más intenso para el carácter específico
+        
+        # Configuración de números de línea
+        self._line_numbers = tk.Text(
+            self.master, width=4,
+            padx=4, pady=5,
+            takefocus=0,
+            border=0,
+            background='#F0F0F0',
+            foreground='#666666',
+            font=("Consolas", 12)
+        )
+        self._line_numbers.pack(side='left', fill='y')
+        
+        # Bind para actualizar números de línea
+        self.bind('<KeyPress>', self._on_key_press)
+        self.bind('<KeyRelease>', self.on_key_release)
+        
+        # Actualización inicial de números de línea
+        self._update_line_numbers()
 
-        self.bind("<KeyRelease>", self.on_key_release)
+    def _on_key_press(self, event=None):
+        self._update_line_numbers()
+
+    def _update_line_numbers(self):
+        # Limpiar números anteriores
+        self._line_numbers.delete('1.0', tk.END)
+        
+        # Contar líneas en el editor
+        count = self.get('1.0', tk.END).count('\n')
+        
+        # Generar números de línea
+        line_numbers = '\n'.join(str(i).rjust(3) for i in range(1, count + 1))
+        self._line_numbers.insert('1.0', line_numbers)
+        
+        # Sincronizar scroll
+        self._line_numbers.yview_moveto(self.yview()[0])
 
     def set_callback(self, cb):
         self._callback = cb
@@ -31,8 +66,9 @@ class CustomText(tk.Text):
             self._callback()
 
     def highlight_syntax(self):
+        # Remover tags existentes
         for tag in ["comment", "keyword", "identifier", "operator",
-                    "number", "string", "error"]:
+                    "number", "string", "error", "error_line", "error_char"]:
             self.tag_remove(tag, "1.0", "end")
 
         content = self.get("1.0", "end-1c")
@@ -51,8 +87,15 @@ class CustomText(tk.Text):
                     start, end = f"{ln}.{m.start()}", f"{ln}.{m.end()}"
                     self.tag_add(tag, start, end)
 
+    def highlight_error(self, line, column):
+        """Resalta una línea con error y el carácter específico"""
+        # Resaltar toda la línea
+        self.tag_add("error_line", f"{line}.0", f"{line}.end")
+        
+        # Resaltar el carácter específico
+        if column is not None:
+            self.tag_add("error_char", f"{line}.{column}", f"{line}.{column+1}")
 
-# ───────────────────────────── GUI principal ─────────────────────────────────
 class LexerGUI:
     def __init__(self, root: tk.Tk):
         self.root = root
@@ -75,15 +118,20 @@ class LexerGUI:
         self.code_frame = ttk.LabelFrame(root, text="Code Editor")
         self.code_frame.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
 
-        self.code_editor = CustomText(self.code_frame, wrap=tk.WORD,
-                                      bg="#FFFFFF", fg="#333333",
-                                      insertbackground="#333333",
-                                      font=("Consolas", 12))
-        self.code_editor.pack(expand=True, fill="both", padx=5, pady=5)
+        # Frame para contener el editor y sus números de línea
+        editor_container = ttk.Frame(self.code_frame)
+        editor_container.pack(expand=True, fill="both", padx=5, pady=5)
+
+        self.code_editor = CustomText(editor_container, wrap=tk.NONE,
+                                    bg="#FFFFFF", fg="#333333",
+                                    insertbackground="#333333",
+                                    font=("Consolas", 12))
+        self.code_editor.pack(side="right", expand=True, fill="both")
         self.code_editor.set_callback(self.analyze_code_realtime)
 
-        code_scroll = ttk.Scrollbar(self.code_frame, orient="vertical",
-                                    command=self.code_editor.yview)
+        # Scrollbar para el editor
+        code_scroll = ttk.Scrollbar(editor_container, orient="vertical",
+                                  command=self._scroll_both)
         code_scroll.pack(side="right", fill="y")
         self.code_editor.configure(yscrollcommand=code_scroll.set)
 
@@ -126,22 +174,28 @@ class LexerGUI:
             self.error_tree.heading(column, text=column)
         self.error_tree.pack(expand=True, fill="both", padx=5, pady=5)
 
+    def _scroll_both(self, *args):
+        """Sincroniza el scroll del editor y los números de línea"""
+        self.code_editor.yview(*args)
+        self.code_editor._line_numbers.yview(*args)
+
+
     # ───────────────────────── Actualizar GUI ─────────────────────────────
     def analyze_code_realtime(self):
-        # Limpiar vistas
+    # Limpiar vistas
         for tree in (self.token_tree, self.sym_tree, self.error_tree):
             tree.delete(*tree.get_children())
 
-        # Obtener código y guardarlo temporalmente
-        code = self.code_editor.get(1.0, tk.END)
+    # Obtener código desde el editor y guardarlo temporalmente
+        code = self.code_editor.get("1.0", tk.END)
         with open("temp_code.txt", "w", encoding="utf-8") as f:
             f.write(code)
 
-        # Crear tabla de símbolos y lexer
+    # Crear nueva tabla de símbolos y nuevo lexer
         symtab = SymbolTable()
-        lexer = Lexer("temp_code.txt", symtab)
+        lexer = Lexer("temp_code.txt", symtab)  
 
-        # ── Tokens
+    # ── Tokens ─────────────────────────────────────────────────────────────
         for tok in symtab.tokens:
             self.token_tree.insert("", tk.END, values=(
                 tok.category.value,
@@ -150,16 +204,31 @@ class LexerGUI:
                 tok.column
             ))
 
-        # ── Símbolos (identificadores declarados)
+    # ── Tabla de Símbolos ──────────────────────────────────────────────────
         for name, info in symtab.all_symbols().items():
-            self.sym_tree.insert("", tk.END,
-                                 values=(name, info.var_type, info.declared_line))
-
-        # ── Errores
-        for err in lexer.errors:
-            self.error_tree.insert("", tk.END, values=(
-                err._type, err._message, err._line, err._column
+            self.sym_tree.insert("", tk.END, values=(
+                name,
+                info.var_type,
+                info.declared_line
             ))
+
+    # ── Errores ÚNICOS ─────────────────────────────────────────────────────
+        unique_errors = []
+        seen = set()
+        for err in lexer.errors.get_all():
+            key = (err._type, err._message, err._line, err._column)
+            if key not in seen:
+                seen.add(key)
+                unique_errors.append(err)
+
+        for err in unique_errors:
+            self.error_tree.insert("", tk.END, values=(
+                err._type,
+                err._message,
+                err._line,
+                err._column
+            ))
+            self.code_editor.highlight_error(err._line, err._column)
 
 
 # # ────────────────────────────────────────────────────────────────────────────

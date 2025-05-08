@@ -1,2 +1,8 @@
-@invalid-char!.
-@123invalid.
+$ Esto es un comentario
+Num @x = 10.
+Text @texto = "Hola Mundo".
+Bool @bandera = True.
+
+If (x > 5) {
+   Write("x es mayor a 5");
+}
