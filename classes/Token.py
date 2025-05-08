@@ -1,5 +1,7 @@
 from enum import Enum
 
+# TODO: Formato de mensaje error -> "ERROR: ___(mensaje)____[X, Y]"
+# TODO: Quitar mensajes errores
 class TokenErrorCode(Enum):
     IDENTIFIER           = 400
     KEYWORD              = 401
@@ -43,6 +45,14 @@ class TokenCategory(Enum):
     DELIM_BRACE_RIGHT = "DELIM_BRACE_RIGHT"
     WHITESPACE = "WHITESPACE"
     ERROR = "ERROR"
+
+# DELIMS --> 0 -99
+# KEYWORDS -> 100 - 199
+# OPERS -> 200 -299
+# LEX_ERROR -> 300 -399
+# SINTACT_ERROR -> 400 -499
+# 
+# 1000 -> Idents
 
 class TokenCode(Enum):
     IDENTIFIER           = 100

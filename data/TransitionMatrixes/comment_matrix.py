@@ -5,6 +5,7 @@ class CommentStates(IntEnum):
     INI_STATE = 1
     BODY_STATE = 2
     END_STATE = 3
+    ERROR_STATE = 0
 
 # Crear all_chars como una lista de caracteres individuales
 all_chars = (

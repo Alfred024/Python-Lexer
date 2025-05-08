@@ -5,4 +5,15 @@ Bool @bandera = True.
 
 If (x > 5) {
    Write("x es mayor a 5");
+} Else {
+   Write("x es menor o igual a 5");
 }
+
+While (x < 20) {T
+   @x = @x + 1.
+}
+
+For (Num i = 0. i < 3. i = i + 1) {    
+   Write(i).
+}
+

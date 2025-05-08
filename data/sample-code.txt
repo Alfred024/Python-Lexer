@@ -13,6 +13,6 @@ While (x < 20) {T
    @x = @x + 1.
 }
 
-For (Num i = 0. i < 3. i = i + 1) {
+For (Num i = 0. i < 3. i = i + 1) {    
    Write(i).
 }
