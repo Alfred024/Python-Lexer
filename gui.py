@@ -182,20 +182,20 @@ class LexerGUI:
 
     # ───────────────────────── Actualizar GUI ─────────────────────────────
     def analyze_code_realtime(self):
-        # Limpiar vistas y resaltados de error
+    # Limpiar vistas
         for tree in (self.token_tree, self.sym_tree, self.error_tree):
             tree.delete(*tree.get_children())
-        
-        # Obtener código y guardarlo temporalmente
-        code = self.code_editor.get(1.0, tk.END)
+
+    # Obtener código desde el editor y guardarlo temporalmente
+        code = self.code_editor.get("1.0", tk.END)
         with open("temp_code.txt", "w", encoding="utf-8") as f:
             f.write(code)
 
-        # Crear tabla de símbolos y lexer
+    # Crear nueva tabla de símbolos y nuevo lexer
         symtab = SymbolTable()
-        lexer = Lexer("temp_code.txt", symtab)
+        lexer = Lexer("temp_code.txt", symtab)  
 
-        # ── Tokens
+    # ── Tokens ─────────────────────────────────────────────────────────────
         for tok in symtab.tokens:
             self.token_tree.insert("", tk.END, values=(
                 tok.category.value,
@@ -204,19 +204,30 @@ class LexerGUI:
                 tok.column
             ))
 
-        # ── Símbolos (identificadores declarados)
+    # ── Tabla de Símbolos ──────────────────────────────────────────────────
         for name, info in symtab.all_symbols().items():
-            self.sym_tree.insert("", tk.END,
-                                 values=(name, info.var_type, info.declared_line))
-
-        # ── Errores
-        for err in lexer.errors:
-            # Agregar error a la vista de errores
-            self.error_tree.insert("", tk.END, values=(
-                err._type, err._message, err._line, err._column
+            self.sym_tree.insert("", tk.END, values=(
+                name,
+                info.var_type,
+                info.declared_line
             ))
-            
-            # Resaltar error en el editor
+
+    # ── Errores ÚNICOS ─────────────────────────────────────────────────────
+        unique_errors = []
+        seen = set()
+        for err in lexer.errors.get_all():
+            key = (err._type, err._message, err._line, err._column)
+            if key not in seen:
+                seen.add(key)
+                unique_errors.append(err)
+
+        for err in unique_errors:
+            self.error_tree.insert("", tk.END, values=(
+                err._type,
+                err._message,
+                err._line,
+                err._column
+            ))
             self.code_editor.highlight_error(err._line, err._column)
 
 

@@ -2,6 +2,7 @@
 # Classes
 from classes.Token import Token, TokenCategory, TokenCode, TokenError
 from classes.SymbolTable import SymbolTable
+from classes.ErrorsStack import ErrorsStack 
 # Dictionary 📑
 import data.alphabet as alphabet
 # Transition matrixes
@@ -25,7 +26,8 @@ class Lexer:
 
     def __init__(self, file_input: str, symtab: SymbolTable):
         self.symtab = symtab
-        self.errors: list[TokenError] = []
+        self.errors = ErrorsStack()
+        #self.errors: list[TokenError] = []
         self.file_input = file_input
         self.current_row_ix = 0
         self.current_col_ix = 0
@@ -99,7 +101,7 @@ class Lexer:
 
         else:
             lexeme = self.__get_malformed_lexeme()
-            self.errors.append(TokenError(
+            self.errors.push(TokenError(
                 error_type='Lexical Error',
                 message=f'Lexeme "{lexeme}" not recognized.',
                 line=self.current_row_ix + 1,
@@ -142,11 +144,17 @@ class Lexer:
                 break
 
         self.current_col_ix = pos - 1
+        self.errors.push(TokenError(
+            error_type='Lexical Error',
+            message=f'Lexeme "{lexeme}" not recognized.',
+            line=self.current_row_ix + 1,
+            column=self.current_col_ix
+        ))
         return lexeme
 
     def __read_identifier(self, lexeme):
         if len(lexeme) <= 1 or len(lexeme) > 16 or lexeme[1:] in self.keywords:
-            self.errors.append(TokenError(
+            self.errors.push(TokenError(
                 error_type='Identifier Error',
                 message=f"'{lexeme}' mal formado.",
                 line=self.current_row_ix + 1,
@@ -169,7 +177,7 @@ class Lexer:
             try:
                 self.symtab.declare(lexeme, prev_tok.value, tok.row)
             except ValueError as e:
-                self.errors.append(TokenError(
+                self.errors.push(TokenError(
                     error_type="Duplicate Identifier",
                     message=str(e),
                     line=tok.row,
@@ -177,7 +185,7 @@ class Lexer:
                 ))
         else:
             if not self.symtab.is_declared(lexeme):
-                self.errors.append(TokenError(
+                self.errors.push(TokenError(
                     error_type="Undeclared Identifier",
                     message=f"Variable '{lexeme}' usada sin declarar.",
                     line=tok.row,
@@ -243,7 +251,7 @@ class Lexer:
 
     def __read_keyword(self, lexeme):
         if not lexeme or lexeme not in self.keywords:
-            self.errors.append(TokenError(
+            self.errors.push(TokenError(
                 error_type='Keyword Error',
                 message=f"'{lexeme}' no es keyword.",
                 line=self.current_row_ix + 1,
