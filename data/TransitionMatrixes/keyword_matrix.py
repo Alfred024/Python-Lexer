@@ -34,6 +34,7 @@ class KeywordStates(IntEnum):
     RE_STATE = 30    # Para "Read"
     REA_STATE = 31   # Para "Read"
     END_STATE = 32
+    ERROR_STATE = 33
 
 keyword_matrix = {
     KeywordStates.INI_STATE: {

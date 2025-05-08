@@ -1,12 +1,12 @@
 from enum import Enum
 
-# TODO: Añadir el código del error
-# TODO: Añador códigos a las diferentes categorías de Token
-# class TokenCodeError(Enum):
-    
+class TokenErrorCode(Enum):
+    IDENTIFIER           = 400
+    KEYWORD              = 401
+    UNDEFINED_ERROR      = 404
 
 class TokenError:
-    def __init__(self, error_type: str, message: str, line: int, column: int) -> None:
+    def __init__(self, error_type: str, error_code : TokenErrorCode = TokenErrorCode.UNDEFINED_ERROR, message: str = '', line: int = -1, column: int = -1) -> None:
         self._type = error_type
         self._message = message
         self._line = line
@@ -71,7 +71,7 @@ class TokenCode(Enum):
 
 
 class Token:
-    def __init__(self, category: TokenCategory, code : TokenCode = TokenCode.NO_IDENTIFIED, value : str = '', row: int = 0, column: int = 0):
+    def __init__(self, category: TokenCategory, code : TokenCode = TokenCode.NO_IDENTIFIED, value : str = '', row: int = -1, column: int = -1):
         self.category = category
         self.code = code
         self.value = value

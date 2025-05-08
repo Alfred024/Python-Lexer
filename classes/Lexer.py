@@ -54,19 +54,19 @@ class Lexer:
     def __categorize_char(self, char: str):
         if char == '@':
             lexeme = self.__get_lexeme(TokenCategory.IDENTIFIER,
-                                        IdentifierStates.INI_STATE,
+                                        IdentifierStates,
                                         id_matrix.identifier_matrix)
             self.__read_identifier(lexeme)
 
         elif char == '$':
             lexeme = self.__get_lexeme(TokenCategory.COMMENT,
-                                        CommentStates.INI_STATE,
+                                        CommentStates,
                                         comment_matrix.comment_matrix)
             self.__read_comment(lexeme)
 
         elif char in 'NTBWFIER':  # inicio posible keyword
             lexeme = self.__get_lexeme(TokenCategory.KEYWORD,
-                                        KeywordStates.INI_STATE,
+                                        KeywordStates,
                                         keyword_matrix.keyword_matrix)
             self.__read_keyword(lexeme)
 
@@ -81,10 +81,8 @@ class Lexer:
                                         OperatorStates,
                                         operator_matrix.operator_matrix)
             self.__read_operator(lexeme)
-
         elif char in alphabet.alphabet['spaces']:
             self.__read_whitespace()
-
         elif char in alphabet.alphabet['numbers']:
             lexeme = self.__get_lexeme(TokenCategory.NUM,
                                         NumberStates,
@@ -96,59 +94,83 @@ class Lexer:
                                         TextStates,
                                         text_matrix.text_matrix)
             self.__read_text(lexeme)
-
         else:
-            lexeme = self.__get_malformed_lexeme()
-            self.errors.append(TokenError(
-                error_type='Lexical Error',
-                message=f'Lexeme "{lexeme}" not recognized.',
-                line=self.current_row_ix + 1,
-                column=self.current_col_ix
-            ))
+            self.__set_error(TokenCategory.ERROR, char)
 
     def __get_lexeme(self, token_category, states, matrix) -> str:
         lexeme = ""
         state = states.INI_STATE
-        pos = self.current_col_ix
 
-        while pos < len(self.row_list[self.current_row_ix]):
-            ch = self.row_list[self.current_row_ix][pos]
-            nxt = matrix.get(state, {}).get(ch)
+        while self.current_col_ix < len(self.row_list[self.current_row_ix]):
+            ch = self.row_list[self.current_row_ix][self.current_col_ix]
+            state = matrix.get(state, {}).get(ch)
 
-            if nxt is None:
+            if state is None:
                 break
+            
+            if state == states.ERROR_STATE:
+                self.__set_error(token_category, lexeme)
+                return ''
 
             lexeme += ch
-            pos += 1
-            state = nxt
+            self.current_col_ix += 1
 
             if state == states.END_STATE:
                 break
-            if token_category == TokenCategory.COMMENT and state == CommentStates.END_STATE:
-                break
-
-        self.current_col_ix = pos - 1
+        
+        self.current_col_ix -= 1
         return lexeme
 
-    def __get_malformed_lexeme(self):
-        lexeme = ""
+    def __get_malformed_lexeme(self, lexeme = ''):
         pos = self.current_col_ix
-
         while pos < len(self.row_list[self.current_row_ix]):
             ch = self.row_list[self.current_row_ix][pos]
             lexeme += ch
             pos += 1
             if ch in alphabet.alphabet['spaces']:
                 break
-
         self.current_col_ix = pos - 1
         return lexeme
 
-    def __read_identifier(self, lexeme):
-        if len(lexeme) <= 1 or len(lexeme) > 16 or lexeme[1:] in self.keywords:
+    def __set_error(self, token_category : TokenCategory, lexeme):
+        if token_category == TokenCategory.IDENTIFIER:
+            lexeme = self.__get_malformed_lexeme(lexeme=lexeme)
             self.errors.append(TokenError(
-                error_type='Identifier Error',
-                message=f"'{lexeme}' mal formado.",
+                error_type='Identifier',
+                message=f"'{lexeme}' formed incorrectly.",
+                line=self.current_row_ix + 1,
+                column=self.current_col_ix
+            ))
+            return lexeme
+        if token_category == TokenCategory.ERROR:
+            lexeme = self.__get_malformed_lexeme(lexeme=lexeme)
+            self.errors.append(TokenError(
+                error_type='Bad entry',
+                message=f"'{lexeme}' can´t be assign a token category.",
+                line=self.current_row_ix + 1,
+                column=self.current_col_ix
+            ))
+        else:
+            print('NO IDENTIFICADO...')
+            pass
+
+    def __read_identifier(self, lexeme):
+        if lexeme == '':
+            return
+        
+        if len(lexeme) <= 1 or len(lexeme) > 16:
+            self.errors.append(TokenError(
+                error_type='Identifier',
+                message=f"'{lexeme}' is too large.",
+                line=self.current_row_ix + 1,
+                column=self.current_col_ix
+            ))
+            return
+        
+        if lexeme[1:] in self.keywords:
+            self.errors.append(TokenError(
+                error_type='Identifier',
+                message=f"'{lexeme}' can´t be a keyword.",
                 line=self.current_row_ix + 1,
                 column=self.current_col_ix
             ))
@@ -179,13 +201,12 @@ class Lexer:
             if not self.symtab.is_declared(lexeme):
                 self.errors.append(TokenError(
                     error_type="Undeclared Identifier",
-                    message=f"Variable '{lexeme}' usada sin declarar.",
+                    message=f"Var '{lexeme}' used with no declaration.",
                     line=tok.row,
                     column=tok.column
                 ))
 
         self.symtab.add_token(tok)
-
 
     def __read_delimitator(self, lexeme):
         token_categories = {

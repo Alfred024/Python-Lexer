@@ -5,6 +5,7 @@ import data.alphabet as alphabet
 class DelimitatorStates(IntEnum):
     INI_STATE      = 1
     END_STATE      = 2
+    ERROR_STATE    = 3
 
 delim_chars = alphabet.alphabet['delim_chars']
 

@@ -4,12 +4,13 @@ import data.alphabet as alphabet
 
 class OperatorStates(IntEnum):
     INI_STATE     = 1
-    PLUS    = 2
-    MINUS   = 3
-    REL_1   = 4   # '!', '<', '>', '='
-    AND_1   = 5   # '&'
-    OR_1    = 6   # '|'
+    PLUS          = 2
+    MINUS         = 3
+    REL_1         = 4
+    AND_1         = 5
+    OR_1          = 6
     END_STATE     = 7
+    ERROR_STATE   = 8
 
 operator_matrix = {
     OperatorStates.INI_STATE: {

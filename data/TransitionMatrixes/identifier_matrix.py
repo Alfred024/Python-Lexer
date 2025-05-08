@@ -7,6 +7,7 @@ class IdentifierStates(IntEnum):
     PRE_BODY_STATE = 2
     BODY_STATE     = 3
     END_STATE      = 4
+    ERROR_STATE    = 5
 
 chars   = alphabet.alphabet['chars']
 numbers  = alphabet.alphabet['numbers']
@@ -21,12 +22,14 @@ identifier_matrix = {
         '_': IdentifierStates.BODY_STATE ,
         **{space: IdentifierStates.END_STATE for space in spaces},
         '.': IdentifierStates.END_STATE,
+        **{number: IdentifierStates.ERROR_STATE for number in numbers},
+        '-': IdentifierStates.BODY_STATE,
     },
     IdentifierStates.BODY_STATE: {
         **{char: IdentifierStates.BODY_STATE for char in chars},
         **{number: IdentifierStates.BODY_STATE for number in numbers},
         '_': IdentifierStates.BODY_STATE ,
-        **{space: IdentifierStates.END_STATE for space in spaces},
-        '.': IdentifierStates.END_STATE,
+        # **{space: IdentifierStates.END_STATE for space in spaces},
+        # '.': IdentifierStates.END_STATE,
     },
 }

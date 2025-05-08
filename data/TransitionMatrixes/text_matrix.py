@@ -5,6 +5,7 @@ class TextStates(IntEnum):
     INI_STATE      = 1
     BODY_STATE     = 2
     END_STATE      = 3
+    ERROR_STATE    = 4
 
 ascii_characters = [chr(i) for i in range(128)]
 
