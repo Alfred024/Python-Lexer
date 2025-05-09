@@ -4,6 +4,10 @@ import re
 from classes.SymbolTable import SymbolTable
 from classes.Lexer import Lexer
 from classes.Token import TokenCategory, Token, TokenError
+import subprocess
+import os
+import sys
+
 
 
 # ───────────────────────────── Editor con resaltado ──────────────────────────
@@ -110,13 +114,26 @@ class LexerGUI:
         # Grid del root
         self.root.grid_columnconfigure(0, weight=3)
         self.root.grid_columnconfigure(1, weight=2)
-        self.root.grid_rowconfigure(0, weight=3)
-        self.root.grid_rowconfigure(1, weight=1)
+        self.root.grid_rowconfigure(0, weight=0) 
+        self.root.grid_rowconfigure(1, weight=3)
+        self.root.grid_rowconfigure(2, weight=1)
+
         self.root.configure(bg="#F5F5F5")
+        
+        # Menú desplegable para las guias
+        guide_menu = ttk.Menubutton(self.root, text="Abrir Guía", direction="below")
+        menu = tk.Menu(guide_menu, tearoff=0)
+        menu.add_command(label="Guía Léxica", command=lambda: self.open_pdf("guides/Análisis_léxico.pdf"))
+        menu.add_command(label="Guía Sintáctica", command=lambda: self.open_pdf("guides/Análisis_sintáctico.pdf"))
+        menu.add_command(label="Guía Semántica", command=lambda: self.open_pdf("guides/Análisis_semántico.pdf"))
+        menu.add_command(label="Guía Lenguaje", command=lambda: self.open_pdf("guides/Guia_lenguaje.pdf"))
+        guide_menu["menu"] = menu
+        guide_menu.grid(row=0, column=0, columnspan=2, padx=10, pady=5, sticky="w")
+
 
         # ── Editor ──────────────────────────────────────────────────────────
         self.code_frame = ttk.LabelFrame(root, text="Code Editor")
-        self.code_frame.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
+        self.code_frame.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
 
         # Frame para contener el editor y sus números de línea
         editor_container = ttk.Frame(self.code_frame)
@@ -137,7 +154,7 @@ class LexerGUI:
 
         # ── Vista de tokens ────────────────────────────────────────────────
         self.token_frame = ttk.LabelFrame(root, text="Tokens")
-        self.token_frame.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
+        self.token_frame.grid(row=1, column=1, padx=5, pady=5, sticky="nsew")
 
         self.token_tree = ttk.Treeview(
             self.token_frame,
@@ -150,7 +167,7 @@ class LexerGUI:
 
         # ── Vista tabla de símbolos ────────────────────────────────────────
         self.sym_frame = ttk.LabelFrame(root, text="Symbol Table")
-        self.sym_frame.grid(row=1, column=0, padx=5, pady=5,
+        self.sym_frame.grid(row=2, column=0, padx=5, pady=5,
                             columnspan=1, sticky="nsew")
         self.sym_tree = ttk.Treeview(
             self.sym_frame,
@@ -163,7 +180,7 @@ class LexerGUI:
 
         # ── Vista de errores ───────────────────────────────────────────────
         self.error_frame = ttk.LabelFrame(root, text="Errors")
-        self.error_frame.grid(row=1, column=1, padx=5, pady=5, sticky="nsew")
+        self.error_frame.grid(row=2, column=1, padx=5, pady=5, sticky="nsew")
 
         self.error_tree = ttk.Treeview(
             self.error_frame,
@@ -229,6 +246,22 @@ class LexerGUI:
                 err._column
             ))
             self.code_editor.highlight_error(err._line, err._column)
+            
+     #── Abrir archivos de docmumentación PDF ───────────────────────────────
+    def open_pdf(self, filename):
+        try:
+            filepath = os.path.abspath(filename)
+            if os.name == 'nt':  # Windows
+                os.startfile(filepath)
+            elif sys.platform == 'darwin':  # macOS
+                subprocess.Popen(['open', filepath])
+            else: 
+                subprocess.Popen(['xdg-open', filepath])
+        except Exception as e:
+                print("Error al abrir PDF:", e)
+
+
+
 
 
 # # ────────────────────────────────────────────────────────────────────────────
