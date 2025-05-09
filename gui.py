@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, scrolledtext
+from tkinter import ttk, scrolledtext, PhotoImage, Toplevel, Label
 import re
 from classes.SymbolTable import SymbolTable
 from classes.Lexer import Lexer
@@ -7,7 +7,6 @@ from classes.Token import TokenCategory, Token, TokenError
 import subprocess
 import os
 import sys
-
 
 
 # ───────────────────────────── Editor con resaltado ──────────────────────────
@@ -114,21 +113,52 @@ class LexerGUI:
         # Grid del root
         self.root.grid_columnconfigure(0, weight=3)
         self.root.grid_columnconfigure(1, weight=2)
+        self.root.grid_columnconfigure(2, weight=0)  # Nueva columna para el logo
         self.root.grid_rowconfigure(0, weight=0) 
         self.root.grid_rowconfigure(1, weight=3)
         self.root.grid_rowconfigure(2, weight=1)
 
         self.root.configure(bg="#F5F5F5")
         
-        # Menú desplegable para las guias
-        guide_menu = ttk.Menubutton(self.root, text="Abrir Guía", direction="below")
+        top_frame = ttk.Frame(self.root)
+        top_frame.grid(row=0, column=0, columnspan=3, sticky="nsew", padx=10, pady=5)  # Cambiado a columnspan=3
+    
+        # Menú desplegable de guías (izquierda)
+        guide_menu = ttk.Menubutton(top_frame, text="Open Guides", direction="below")
         menu = tk.Menu(guide_menu, tearoff=0)
         menu.add_command(label="Guía Léxica", command=lambda: self.open_pdf("guides/Análisis_léxico.pdf"))
         menu.add_command(label="Guía Sintáctica", command=lambda: self.open_pdf("guides/Análisis_sintáctico.pdf"))
         menu.add_command(label="Guía Semántica", command=lambda: self.open_pdf("guides/Análisis_semántico.pdf"))
         menu.add_command(label="Guía Lenguaje", command=lambda: self.open_pdf("guides/Guia_lenguaje.pdf"))
         guide_menu["menu"] = menu
-        guide_menu.grid(row=0, column=0, columnspan=2, padx=10, pady=5, sticky="w")
+        guide_menu.pack(side="left", padx=(0, 10))
+
+        # Botón About Us (izquierda)
+        about_button = ttk.Button(top_frame, text="About Us", command=self.show_about_us)
+        about_button.pack(side="left", padx=(0, 20))
+
+        compiler_frame = ttk.Frame(top_frame)
+        compiler_frame.pack(side="left", expand=True, fill="both")
+
+        # Logo del compilador (izquierda del nombre)
+        try:
+            self.compiler_logo = PhotoImage(file="images/logo_compilador.png")  # Cambia la ruta
+            self.compiler_logo = self.compiler_logo.subsample(15,15)  # Ajusta tamaño
+            compiler_logo_label = ttk.Label(compiler_frame, image=self.compiler_logo)
+            compiler_logo_label.pack(side="left", expand=True)
+        except Exception as e:
+            print("No se pudo cargar el logo del compilador:", e)
+            # Placeholder si no hay imagen
+            ttk.Label(compiler_frame, text="[LOGO]").pack(side="left")
+
+        # Logo (derecha)
+        try:
+            self.logo_image = PhotoImage(file="images/logo_tecnm.png")
+            self.logo_image = self.logo_image.subsample(3, 3)  # Ajusta tamaño si es necesario
+            logo_label = ttk.Label(top_frame, image=self.logo_image)
+            logo_label.pack(side="right", anchor="e")
+        except Exception as e:
+            print("No se pudo cargar el logo:", e)
 
 
         # ── Editor ──────────────────────────────────────────────────────────
@@ -259,6 +289,36 @@ class LexerGUI:
                 subprocess.Popen(['xdg-open', filepath])
         except Exception as e:
                 print("Error al abrir PDF:", e)
+                
+    def show_about_us(self):
+        about = Toplevel(self.root)
+        about.title("About Us")
+        about.geometry("400x620")
+        about.configure(bg="white")
+
+        info_text = (
+            "Proyecto Final - Lenguajes y Autómatas II\n"
+            "\nIntegrantes del equipo:\n"
+            "• Luis Farid Chaires Pasalagua\n"
+            "• José Alfredo Jiménez Téllez\n"
+            "• Luis Ruben Rusiles Leal\n"
+            "• Oscar Hurtado González\n"
+            "\nInstituto Tecnológico de Celaya\n"
+        )
+
+        Label(about, text=info_text, justify="left", bg="white", font=("Arial", 11)).pack(pady=10)
+
+        try:
+            team_photo = PhotoImage(file="images/Photo_team.png")
+            team_photo = team_photo.subsample(7, 7)
+            Label(about, image=team_photo, bg="white").pack()
+            # Mantener referencia a la imagen para que no se borre
+            about.team_photo = team_photo
+        except Exception as e:
+            print("No se pudo cargar la imagen del equipo:", e)
+    
+    
+
 
 
 
