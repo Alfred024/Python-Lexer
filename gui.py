@@ -43,6 +43,10 @@ class CustomText(tk.Text):
         # Actualización inicial de números de línea
         self._update_line_numbers()
 
+        # Configuración para tooltips
+        self.tooltip = None
+        self.tooltip_id = None
+
     def _on_key_press(self, event=None):
         self._update_line_numbers()
 
@@ -90,14 +94,55 @@ class CustomText(tk.Text):
                     start, end = f"{ln}.{m.start()}", f"{ln}.{m.end()}"
                     self.tag_add(tag, start, end)
 
-    def highlight_error(self, line, column):
-        """Resalta una línea con error y el carácter específico"""
+    def highlight_error(self, line, column, error_message):
+        """Resalta una línea con error y el carácter específico, y asocia un mensaje"""
         # Resaltar toda la línea
         self.tag_add("error_line", f"{line}.0", f"{line}.end")
 
         # Resaltar el carácter específico
         if column is not None:
-            self.tag_add("error_char", f"{line}.{column}", f"{line}.{column + 1}")
+            error_pos = f"{line}.{column}"
+            self.tag_add("error_char", error_pos, f"{line}.{column + 1}")
+
+            # Vincular el tooltip al carácter de error
+            self.tag_bind("error_char", "<Enter>",
+                          lambda event, msg=error_message, pos=error_pos: self.show_tooltip(event, msg, pos))
+            self.tag_bind("error_char", "<Leave>", self.hide_tooltip)
+
+    def show_tooltip(self, event, message, position):
+        """Muestra un tooltip con el mensaje de error en la posición del cursor"""
+        if self.tooltip:
+            self.hide_tooltip()
+
+        x = self.winfo_rootx() + event.x + 10
+        y = self.winfo_rooty() + event.y + 10
+
+        self.tooltip = tk.Toplevel(self)
+        self.tooltip.wm_overrideredirect(True)
+        self.tooltip.wm_geometry(f"+{x}+{y}")
+
+        label = tk.Label(
+            self.tooltip,
+            text=message,
+            justify="left",
+            background="#FFFFCC",
+            relief="solid",
+            borderwidth=1,
+            font=("Consolas", 10)
+        )
+        label.pack()
+
+        # Programar el tooltip para desaparecer después de 5 segundos
+        self.tooltip_id = self.after(5000, self.hide_tooltip)
+
+    def hide_tooltip(self, event=None):
+        """Oculta el tooltip"""
+        if self.tooltip:
+            self.tooltip.destroy()
+            self.tooltip = None
+        if self.tooltip_id:
+            self.after_cancel(self.tooltip_id)
+            self.tooltip_id = None
 
 
 class LexerGUI:
@@ -107,6 +152,15 @@ class LexerGUI:
 
         # Agregar variable para el archivo actual
         self.current_file = None
+
+        # Mapa de mensajes de ayuda para errores
+        self.error_help_messages = {
+            "InvalidCharacter": {
+                ";": "Caracter no reconocido ';', se esperaba '.'. Ejemplo: Bool @x = True."
+            },
+            # Puedes agregar más tipos de error aquí, por ejemplo:
+            # "UnexpectedToken": "Token inesperado. Verifica la sintaxis de la sentencia."
+        }
 
         # Crear barra de menús
         menubar = tk.Menu(self.root)
@@ -131,7 +185,7 @@ class LexerGUI:
         # Grid del root
         self.root.grid_columnconfigure(0, weight=3)
         self.root.grid_columnconfigure(1, weight=2)
-        self.root.grid_columnconfigure(2, weight=0)  # Nueva columna para el logo
+        self.root.grid_columnconfigure(2, weight=0)
         self.root.grid_rowconfigure(0, weight=0)
         self.root.grid_rowconfigure(1, weight=3)
         self.root.grid_rowconfigure(2, weight=1)
@@ -284,13 +338,40 @@ class LexerGUI:
                 unique_errors.append(err)
 
         for err in unique_errors:
+            # Obtener mensaje de ayuda personalizado
+            help_message = self.get_help_message(err)
             self.error_tree.insert("", tk.END, values=(
                 err._type,
-                err._message,
+                help_message,
                 err._line,
                 err._column
             ))
-            self.code_editor.highlight_error(err._line, err._column)
+            self.code_editor.highlight_error(err._line, err._column, help_message)
+
+    def get_help_message(self, error):
+        """Devuelve un mensaje de ayuda personalizado para el error"""
+        default_message = error._message
+        error_type = error._type
+        error_char = None
+
+        # Intentar obtener el carácter que causó el error
+        try:
+            code = self.code_editor.get("1.0", tk.END)
+            lines = code.splitlines()
+            if 0 < error._line <= len(lines):
+                line = lines[error._line - 1]
+                if 0 <= error._column < len(line):
+                    error_char = line[error._column]
+        except IndexError:
+            pass
+
+        # Buscar mensaje personalizado
+        if error_type in self.error_help_messages:
+            char_map = self.error_help_messages[error_type]
+            if error_char in char_map:
+                return char_map[error_char]
+
+        return default_message
 
     # ── Abrir archivos de documentación PDF ───────────────────────────────
     def open_pdf(self, filename):

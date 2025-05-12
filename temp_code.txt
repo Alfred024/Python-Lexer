@@ -1,1 +1,3 @@
-
+$ Este es mi propio lenguaje de programacion
+Bool @x = True.
+Bool @y = False;
