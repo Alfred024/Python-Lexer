@@ -1,0 +1,2 @@
+$ Este es mi archivo de prueba.
+Bool @x = False.

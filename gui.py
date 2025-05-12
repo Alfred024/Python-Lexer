@@ -15,15 +15,15 @@ class CustomText(tk.Text):
         super().__init__(*args, **kwargs)
 
         # Paleta de colores
-        self.tag_configure("comment",    foreground="#65B741")
-        self.tag_configure("keyword",    foreground="#3559E0")
+        self.tag_configure("comment", foreground="#65B741")
+        self.tag_configure("keyword", foreground="#3559E0")
         self.tag_configure("identifier", foreground="#FF6B6B")
-        self.tag_configure("operator",   foreground="#00FF00")
-        self.tag_configure("number",     foreground="#B15EFF")
-        self.tag_configure("string",     foreground="#4F709C")
+        self.tag_configure("operator", foreground="#00FF00")
+        self.tag_configure("number", foreground="#B15EFF")
+        self.tag_configure("string", foreground="#4F709C")
         self.tag_configure("error_line", background="#FFE4E4")  # Fondo rojo claro para líneas con error
         self.tag_configure("error_char", background="#FF9999")  # Rojo más intenso para el carácter específico
-        
+
         # Configuración de números de línea
         self._line_numbers = tk.Text(
             self.master, width=4,
@@ -35,11 +35,11 @@ class CustomText(tk.Text):
             font=("Consolas", 12)
         )
         self._line_numbers.pack(side='left', fill='y')
-        
+
         # Bind para actualizar números de línea
         self.bind('<KeyPress>', self._on_key_press)
         self.bind('<KeyRelease>', self.on_key_release)
-        
+
         # Actualización inicial de números de línea
         self._update_line_numbers()
 
@@ -49,14 +49,14 @@ class CustomText(tk.Text):
     def _update_line_numbers(self):
         # Limpiar números anteriores
         self._line_numbers.delete('1.0', tk.END)
-        
+
         # Contar líneas en el editor
         count = self.get('1.0', tk.END).count('\n')
-        
+
         # Generar números de línea
         line_numbers = '\n'.join(str(i).rjust(3) for i in range(1, count + 1))
         self._line_numbers.insert('1.0', line_numbers)
-        
+
         # Sincronizar scroll
         self._line_numbers.yview_moveto(self.yview()[0])
 
@@ -76,12 +76,12 @@ class CustomText(tk.Text):
 
         content = self.get("1.0", "end-1c")
         patterns = {
-            "comment":    r"\$.*$",
-            "keyword":    r"\b(Num|Text|Bool|If|Else|While|For|Write|Read|True|False)\b",
+            "comment": r"\$.*$",
+            "keyword": r"\b(Num|Text|Bool|If|Else|While|For|Write|Read|True|False)\b",
             "identifier": r"@\w+",
-            "operator":   r"[=+\-*/<>.]",
-            "number":     r"\b\d+(\.\d+)?\b",
-            "string":     r'"[^"]*"'
+            "operator": r"[=+\-*/<>.]",
+            "number": r"\b\d+(\.\d+)?\b",
+            "string": r'"[^"]*"'
         }
 
         for ln, line in enumerate(content.split("\n"), 1):
@@ -94,15 +94,33 @@ class CustomText(tk.Text):
         """Resalta una línea con error y el carácter específico"""
         # Resaltar toda la línea
         self.tag_add("error_line", f"{line}.0", f"{line}.end")
-        
+
         # Resaltar el carácter específico
         if column is not None:
-            self.tag_add("error_char", f"{line}.{column}", f"{line}.{column+1}")
+            self.tag_add("error_char", f"{line}.{column}", f"{line}.{column + 1}")
+
 
 class LexerGUI:
     def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title("Python Lexer IDE")
+
+        # Agregar variable para el archivo actual
+        self.current_file = None
+
+        # Crear barra de menús
+        menubar = tk.Menu(self.root)
+        self.root.config(menu=menubar)
+
+        # Menú "Archivo"
+        file_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Archivo", menu=file_menu)
+        file_menu.add_command(label="Nuevo", command=self.new_file)
+        file_menu.add_command(label="Abrir", command=self.open_file)
+        file_menu.add_command(label="Guardar", command=self.save_file)
+        file_menu.add_command(label="Guardar como...", command=self.save_as_file)
+        file_menu.add_separator()
+        file_menu.add_command(label="Salir", command=self.root.quit)
 
         # Tema claro
         style = ttk.Style()
@@ -114,15 +132,15 @@ class LexerGUI:
         self.root.grid_columnconfigure(0, weight=3)
         self.root.grid_columnconfigure(1, weight=2)
         self.root.grid_columnconfigure(2, weight=0)  # Nueva columna para el logo
-        self.root.grid_rowconfigure(0, weight=0) 
+        self.root.grid_rowconfigure(0, weight=0)
         self.root.grid_rowconfigure(1, weight=3)
         self.root.grid_rowconfigure(2, weight=1)
 
         self.root.configure(bg="#F5F5F5")
-        
+
         top_frame = ttk.Frame(self.root)
-        top_frame.grid(row=0, column=0, columnspan=3, sticky="nsew", padx=10, pady=5)  # Cambiado a columnspan=3
-    
+        top_frame.grid(row=0, column=0, columnspan=3, sticky="nsew", padx=10, pady=5)
+
         # Menú desplegable de guías (izquierda)
         guide_menu = ttk.Menubutton(top_frame, text="Open Guides", direction="below")
         menu = tk.Menu(guide_menu, tearoff=0)
@@ -142,24 +160,22 @@ class LexerGUI:
 
         # Logo del compilador (izquierda del nombre)
         try:
-            self.compiler_logo = PhotoImage(file="images/logo_compilador.png")  # Cambia la ruta
-            self.compiler_logo = self.compiler_logo.subsample(15,15)  # Ajusta tamaño
+            self.compiler_logo = PhotoImage(file="images/logo_compilador.png")
+            self.compiler_logo = self.compiler_logo.subsample(15, 15)
             compiler_logo_label = ttk.Label(compiler_frame, image=self.compiler_logo)
             compiler_logo_label.pack(side="left", expand=True)
         except Exception as e:
             print("No se pudo cargar el logo del compilador:", e)
-            # Placeholder si no hay imagen
             ttk.Label(compiler_frame, text="[LOGO]").pack(side="left")
 
         # Logo (derecha)
         try:
             self.logo_image = PhotoImage(file="images/logo_tecnm.png")
-            self.logo_image = self.logo_image.subsample(3, 3)  # Ajusta tamaño si es necesario
+            self.logo_image = self.logo_image.subsample(3, 3)
             logo_label = ttk.Label(top_frame, image=self.logo_image)
             logo_label.pack(side="right", anchor="e")
         except Exception as e:
             print("No se pudo cargar el logo:", e)
-
 
         # ── Editor ──────────────────────────────────────────────────────────
         self.code_frame = ttk.LabelFrame(root, text="Code Editor")
@@ -170,15 +186,15 @@ class LexerGUI:
         editor_container.pack(expand=True, fill="both", padx=5, pady=5)
 
         self.code_editor = CustomText(editor_container, wrap=tk.NONE,
-                                    bg="#FFFFFF", fg="#333333",
-                                    insertbackground="#333333",
-                                    font=("Consolas", 12))
+                                      bg="#FFFFFF", fg="#333333",
+                                      insertbackground="#333333",
+                                      font=("Consolas", 12))
         self.code_editor.pack(side="right", expand=True, fill="both")
         self.code_editor.set_callback(self.analyze_code_realtime)
 
         # Scrollbar para el editor
         code_scroll = ttk.Scrollbar(editor_container, orient="vertical",
-                                  command=self._scroll_both)
+                                    command=self._scroll_both)
         code_scroll.pack(side="right", fill="y")
         self.code_editor.configure(yscrollcommand=code_scroll.set)
 
@@ -226,23 +242,22 @@ class LexerGUI:
         self.code_editor.yview(*args)
         self.code_editor._line_numbers.yview(*args)
 
-
     # ───────────────────────── Actualizar GUI ─────────────────────────────
     def analyze_code_realtime(self):
-    # Limpiar vistas
+        # Limpiar vistas
         for tree in (self.token_tree, self.sym_tree, self.error_tree):
             tree.delete(*tree.get_children())
 
-    # Obtener código desde el editor y guardarlo temporalmente
+        # Obtener código desde el editor y guardarlo temporalmente
         code = self.code_editor.get("1.0", tk.END)
         with open("temp_code.txt", "w", encoding="utf-8") as f:
             f.write(code)
 
-    # Crear nueva tabla de símbolos y nuevo lexer
+        # Crear nueva tabla de símbolos y nuevo lexer
         symtab = SymbolTable()
-        lexer = Lexer("temp_code.txt", symtab)  
+        lexer = Lexer("temp_code.txt", symtab)
 
-    # ── Tokens ─────────────────────────────────────────────────────────────
+        # ── Tokens ─────────────────────────────────────────────────────────────
         for tok in symtab.tokens:
             self.token_tree.insert("", tk.END, values=(
                 tok.category.value,
@@ -251,7 +266,7 @@ class LexerGUI:
                 tok.column
             ))
 
-    # ── Tabla de Símbolos ──────────────────────────────────────────────────
+        # ── Tabla de Símbolos ──────────────────────────────────────────────────
         for name, info in symtab.all_symbols().items():
             self.sym_tree.insert("", tk.END, values=(
                 name,
@@ -259,7 +274,7 @@ class LexerGUI:
                 info.declared_line
             ))
 
-    # ── Errores ÚNICOS ─────────────────────────────────────────────────────
+        # ── Errores ÚNICOS ─────────────────────────────────────────────────────
         unique_errors = []
         seen = set()
         for err in lexer.errors.get_all():
@@ -276,8 +291,8 @@ class LexerGUI:
                 err._column
             ))
             self.code_editor.highlight_error(err._line, err._column)
-            
-     #── Abrir archivos de docmumentación PDF ───────────────────────────────
+
+    # ── Abrir archivos de documentación PDF ───────────────────────────────
     def open_pdf(self, filename):
         try:
             filepath = os.path.abspath(filename)
@@ -285,11 +300,11 @@ class LexerGUI:
                 os.startfile(filepath)
             elif sys.platform == 'darwin':  # macOS
                 subprocess.Popen(['open', filepath])
-            else: 
+            else:
                 subprocess.Popen(['xdg-open', filepath])
         except Exception as e:
-                print("Error al abrir PDF:", e)
-                
+            print("Error al abrir PDF:", e)
+
     def show_about_us(self):
         about = Toplevel(self.root)
         about.title("About Us")
@@ -312,21 +327,65 @@ class LexerGUI:
             team_photo = PhotoImage(file="images/Photo_team.png")
             team_photo = team_photo.subsample(7, 7)
             Label(about, image=team_photo, bg="white").pack()
-            # Mantener referencia a la imagen para que no se borre
             about.team_photo = team_photo
         except Exception as e:
             print("No se pudo cargar la imagen del equipo:", e)
-    
-    
+
+    # ───────────────────────── Manejo de archivos ─────────────────────────
+    def new_file(self):
+        """Crear nuevo archivo"""
+        self.current_file = None
+        self.code_editor.delete(1.0, tk.END)
+        self.root.title("Python Lexer IDE - Nuevo archivo")
+
+    def open_file(self):
+        """Abrir archivo existente"""
+        from tkinter import filedialog
+        filepath = filedialog.askopenfilename(
+            defaultextension=".txt",
+            filetypes=[
+                ("Archivos de texto", "*.txt"),
+                ("Todos los archivos", "*.*")
+            ]
+        )
+        if filepath:
+            self.current_file = filepath
+            with open(filepath, 'r', encoding='utf-8') as file:
+                content = file.read()
+                self.code_editor.delete(1.0, tk.END)
+                self.code_editor.insert(1.0, content)
+            self.root.title(f"Python Lexer IDE - {filepath}")
+
+    def save_file(self):
+        """Guardar archivo actual"""
+        if self.current_file:
+            content = self.code_editor.get(1.0, tk.END)
+            with open(self.current_file, 'w', encoding='utf-8') as file:
+                file.write(content)
+        else:
+            self.save_as_file()
+
+    def save_as_file(self):
+        """Guardar como nuevo archivo"""
+        from tkinter import filedialog
+        filepath = filedialog.asksaveasfilename(
+            defaultextension=".txt",
+            filetypes=[
+                ("Archivos de texto", "*.txt"),
+                ("Todos los archivos", "*.*")
+            ]
+        )
+        if filepath:
+            self.current_file = filepath
+            content = self.code_editor.get(1.0, tk.END)
+            with open(filepath, 'w', encoding='utf-8') as file:
+                file.write(content)
+            self.root.title(f"Python Lexer IDE - {filepath}")
 
 
-
-
-
-
-# # ────────────────────────────────────────────────────────────────────────────
-# if __name__ == "__main__":
-#     root = tk.Tk()
-#     root.geometry("1200x800")
-#     app = LexerGUI(root)
-#     root.mainloop()
+# ────────────────────────────────────────────────────────────────────────────
+if __name__ == "__main__":
+    root = tk.Tk()
+    root.geometry("1200x800")
+    app = LexerGUI(root)
+    root.mainloop()
