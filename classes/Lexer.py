@@ -52,13 +52,13 @@ class Lexer:
                 self.current_col_ix += 1
             self.current_row_ix += 1
 
+    # TODO: Inidicar la instrucción que si el lexema es "", lo apendice como un error
     def __categorize_char(self, char: str):
         if char == '@':
             lexeme = self.__get_lexeme(TokenCategory.IDENTIFIER,
                                         IdentifierStates,
                                         id_matrix.identifier_matrix)
             self.__read_identifier(lexeme)
-
         elif char == '$':
             lexeme = self.__get_lexeme(TokenCategory.COMMENT,
                                         CommentStates,
@@ -159,25 +159,24 @@ class Lexer:
             pass
 
     def __read_identifier(self, lexeme):
-        if lexeme == '':
+        if len(lexeme[1:]) > 16: # Validation of lenght counting the '@' char 
+            print(f"⚠️ Error: IDENTIFIER '{lexeme}' lenght is {len(lexeme[1:])}. Lexeme must have 15 chars as maximum.")
             return
         
-        if len(lexeme) <= 1 or len(lexeme) > 16:
-            self.errors.push(TokenError(
-                error_type='Identifier',
-                line=self.current_row_ix + 1,
-                column=self.current_col_ix
-            ))
+        if lexeme[1:] in self.keywords: # Validation of no keyword lexeme
+            print(f"⚠️ Error: '{lexeme}' is a keyword.")
             return
         
-        if lexeme[1:] in self.keywords:
-            self.errors.push(TokenError(
-                message=f"'{lexeme}' can´t be a keyword.",
-                line=self.current_row_ix + 1,
-                column=self.current_col_ix
-            ))
-            return
-
+        print(f"✅ Token IDENTIFIER valid: '{lexeme}' in line {self.current_row_ix + 1}")
+        self.tokens.append(
+            Token( 
+                TokenCategory.IDENTIFIER,
+                lexeme,
+                self.current_row_ix,
+                self.current_col_ix - len(lexeme)
+            )
+        )
+        
         tok = Token(
                     TokenCategory.IDENTIFIER,
                     TokenCode.IDENTIFIER,
