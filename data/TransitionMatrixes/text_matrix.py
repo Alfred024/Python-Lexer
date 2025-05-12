@@ -12,11 +12,9 @@ ascii_characters = [chr(i) for i in range(128)]
 text_matrix = {
     TextStates.INI_STATE: {
         '"': TextStates.BODY_STATE,
-        "'": TextStates.BODY_STATE,
     },
     TextStates.BODY_STATE: {
         **{char: TextStates.BODY_STATE for char in ascii_characters},
         '"': TextStates.END_STATE,
-        "'": TextStates.END_STATE
     },
 }

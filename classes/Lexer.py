@@ -2,7 +2,7 @@
 # Classes
 from classes.Token import Token, TokenCategory, TokenCode, TokenError
 from classes.SymbolTable import SymbolTable
-from classes.ErrorsStack import ErrorsStack 
+from classes.ErrorsStack import ErrorsStack, LexicalErrorCode 
 # Dictionary 📑
 import data.alphabet as alphabet
 # Transition matrixes
@@ -47,18 +47,18 @@ class Lexer:
         while self.current_row_ix < len(self.row_list):
             self.current_col_ix = 0
             while self.current_col_ix < len(self.row_list[self.current_row_ix]):
-                ch = self.row_list[self.current_row_ix][self.current_col_ix]
-                self.__categorize_char(ch)
+                char = self.row_list[self.current_row_ix][self.current_col_ix]
+                self.__categorize_char(char)
                 self.current_col_ix += 1
             self.current_row_ix += 1
 
+    # TODO: Inidicar la instrucción que si el lexema es "", lo apendice como un error
     def __categorize_char(self, char: str):
         if char == '@':
             lexeme = self.__get_lexeme(TokenCategory.IDENTIFIER,
                                         IdentifierStates,
                                         id_matrix.identifier_matrix)
             self.__read_identifier(lexeme)
-
         elif char == '$':
             lexeme = self.__get_lexeme(TokenCategory.COMMENT,
                                         CommentStates,
@@ -103,8 +103,8 @@ class Lexer:
         state = states.INI_STATE
 
         while self.current_col_ix < len(self.row_list[self.current_row_ix]):
-            ch = self.row_list[self.current_row_ix][self.current_col_ix]
-            state = matrix.get(state, {}).get(ch)
+            char = self.row_list[self.current_row_ix][self.current_col_ix]
+            state = matrix.get(state, {}).get(char)
 
             if state is None:
                 break
@@ -113,7 +113,7 @@ class Lexer:
                 self.__set_error(token_category, lexeme)
                 return ''
 
-            lexeme += ch
+            lexeme += char
             self.current_col_ix += 1
 
             if state == states.END_STATE:
@@ -125,14 +125,13 @@ class Lexer:
     def __get_malformed_lexeme(self, lexeme = ''):
         pos = self.current_col_ix
         while pos < len(self.row_list[self.current_row_ix]):
-            ch = self.row_list[self.current_row_ix][pos]
-            lexeme += ch
+            char = self.row_list[self.current_row_ix][pos]
+            lexeme += char
             pos += 1
-            if ch in alphabet.alphabet['spaces']:
+            if char in alphabet.alphabet['spaces']:
                 break
         self.current_col_ix = pos - 1
         self.errors.push(TokenError(
-            error_type='Lexical Error',
             message=f'Lexeme "{lexeme}" not recognized.',
             line=self.current_row_ix + 1,
             column=self.current_col_ix
@@ -143,7 +142,6 @@ class Lexer:
         if token_category == TokenCategory.IDENTIFIER:
             lexeme = self.__get_malformed_lexeme(lexeme=lexeme)
             self.errors.push(TokenError(
-                error_type='Identifier',
                 message=f"'{lexeme}' formed incorrectly.",
                 line=self.current_row_ix + 1,
                 column=self.current_col_ix
@@ -152,7 +150,6 @@ class Lexer:
         if token_category == TokenCategory.ERROR:
             lexeme = self.__get_malformed_lexeme(lexeme=lexeme)
             self.errors.push(TokenError(
-                error_type='Bad entry',
                 message=f"'{lexeme}' can´t be assign a token category.",
                 line=self.current_row_ix + 1,
                 column=self.current_col_ix
@@ -162,27 +159,24 @@ class Lexer:
             pass
 
     def __read_identifier(self, lexeme):
-        if lexeme == '':
+        if len(lexeme[1:]) > 16: # Validation of lenght counting the '@' char 
+            print(f"⚠️ Error: IDENTIFIER '{lexeme}' lenght is {len(lexeme[1:])}. Lexeme must have 15 chars as maximum.")
             return
         
-        if len(lexeme) <= 1 or len(lexeme) > 16:
-            self.errors.push(TokenError(
-                error_type='Identifier',
-                message=f"'{lexeme}' is too large.",
-                line=self.current_row_ix + 1,
-                column=self.current_col_ix
-            ))
+        if lexeme[1:] in self.keywords: # Validation of no keyword lexeme
+            print(f"⚠️ Error: '{lexeme}' is a keyword.")
             return
         
-        if lexeme[1:] in self.keywords:
-            self.errors.push(TokenError(
-                error_type='Identifier',
-                message=f"'{lexeme}' can´t be a keyword.",
-                line=self.current_row_ix + 1,
-                column=self.current_col_ix
-            ))
-            return
-
+        print(f"✅ Token IDENTIFIER valid: '{lexeme}' in line {self.current_row_ix + 1}")
+        self.tokens.append(
+            Token( 
+                TokenCategory.IDENTIFIER,
+                lexeme,
+                self.current_row_ix,
+                self.current_col_ix - len(lexeme)
+            )
+        )
+        
         tok = Token(
                     TokenCategory.IDENTIFIER,
                     TokenCode.IDENTIFIER,
@@ -199,7 +193,6 @@ class Lexer:
                 self.symtab.declare(lexeme, prev_tok.value, tok.row)
             except ValueError as e:
                 self.errors.push(TokenError(
-                    error_type="Duplicate Identifier",
                     message=str(e),
                     line=tok.row,
                     column=tok.column
@@ -207,7 +200,6 @@ class Lexer:
         else:
             if not self.symtab.is_declared(lexeme):
                 self.errors.push(TokenError(
-                    error_type="Undeclared Identifier",
                     message=f"Var '{lexeme}' used with no declaration.",
                     line=tok.row,
                     column=tok.column
@@ -243,20 +235,26 @@ class Lexer:
     def __read_operator(self, lexeme):
         if lexeme in ['+', '-', '*', '/']:
             tk = TokenCategory.ARIT_OPER
+            tk_code = TokenCode.ARIT_OPER
         elif lexeme in ['==', '!=', '<', '>', '<=', '>=']:
             tk = TokenCategory.REL_OPER
+            tk_code = TokenCode.REL_OPER
         elif lexeme in ['&&', '||', '!']:
             tk = TokenCategory.LOG_OPER
+            tk_code = TokenCode.LOG_OPER
         elif lexeme == '=':
             tk = TokenCategory.ASIG_OPER
+            tk_code = TokenCode.ASIG_OPER
         elif lexeme == '++':
             tk = TokenCategory.INC_OPER
+            tk_code = TokenCode.INC_OPER
         else:
             tk = TokenCategory.DEC_OPER
+            tk_code = TokenCode.DEC_OPER
 
         self.symtab.add_token(Token(
                                     tk, 
-                                    TokenCode.OPERATOR,
+                                    tk_code,
                                     lexeme,
                                     self.current_row_ix + 1,
                                     self.current_col_ix))
@@ -272,7 +270,6 @@ class Lexer:
     def __read_keyword(self, lexeme):
         if not lexeme or lexeme not in self.keywords:
             self.errors.push(TokenError(
-                error_type='Keyword Error',
                 message=f"'{lexeme}' no es keyword.",
                 line=self.current_row_ix + 1,
                 column=self.current_col_ix

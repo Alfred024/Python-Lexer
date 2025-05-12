@@ -1,4 +1,6 @@
+import config
 from classes.Lexer import Lexer
+<<<<<<< HEAD
 from classes.Token import TokenCategory
 from config import project_config
 import tkinter as tk
@@ -17,3 +19,12 @@ if __name__ == "__main__":
     #     print(token)
         
     
+=======
+
+if __name__ == "__main__":
+    lexer = Lexer(config.DELIMS_FILE)
+
+    print('Tokens List: \n')
+    for token in lexer.tokens:
+        print(token)
+>>>>>>> 74db4672bad86f8c5fb1590428ace9c756181ab9
