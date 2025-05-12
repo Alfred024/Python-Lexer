@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 # Classes
-from classes.Token import Token, TokenCategory, TokenCode, TokenError
 from classes.SymbolTable import SymbolTable
-from classes.ErrorsStack import ErrorsStack, LexicalErrorCode 
+from classes.Token import Token, TokenCategory, TokenCode
+    # Errors data 
+from classes.errors.Errors import LexicalError
+from classes.errors.ErrorsCode import LexicalErrorCode
+from classes.errors.ErrorsStack import ErrorsStack 
 # Dictionary 📑
 import data.alphabet as alphabet
 # Transition matrixes
@@ -64,19 +67,16 @@ class Lexer:
                                         CommentStates,
                                         comment_matrix.comment_matrix)
             self.__read_comment(lexeme)
-
         elif char in 'NTBWFIER':  # inicio posible keyword
             lexeme = self.__get_lexeme(TokenCategory.KEYWORD,
                                         KeywordStates,
                                         keyword_matrix.keyword_matrix)
             self.__read_keyword(lexeme)
-
         elif char in alphabet.alphabet['delim_chars']:
             lexeme = self.__get_lexeme(TokenCategory.DELIMITATOR,
                                         DelimitatorStates,
                                         delim_matrix.delimitator_matrix)
             self.__read_delimitator(lexeme)
-
         elif char in alphabet.alphabet['oper_chars']:
             lexeme = self.__get_lexeme(TokenCategory.OPERATOR,
                                         OperatorStates,
@@ -89,7 +89,6 @@ class Lexer:
                                         NumberStates,
                                         number_matrix.number_matrix)
             self.__read_number(lexeme)
-
         elif char in alphabet.alphabet['text_delims']:
             lexeme = self.__get_lexeme(TokenCategory.TEXT,
                                         TextStates,
@@ -131,7 +130,7 @@ class Lexer:
             if char in alphabet.alphabet['spaces']:
                 break
         self.current_col_ix = pos - 1
-        self.errors.push(TokenError(
+        self.errors.push(LexicalError(
             message=f'Lexeme "{lexeme}" not recognized.',
             line=self.current_row_ix + 1,
             column=self.current_col_ix
@@ -141,7 +140,7 @@ class Lexer:
     def __set_error(self, token_category : TokenCategory, lexeme):
         if token_category == TokenCategory.IDENTIFIER:
             lexeme = self.__get_malformed_lexeme(lexeme=lexeme)
-            self.errors.push(TokenError(
+            self.errors.push(LexicalError(
                 message=f"'{lexeme}' formed incorrectly.",
                 line=self.current_row_ix + 1,
                 column=self.current_col_ix
@@ -149,7 +148,7 @@ class Lexer:
             return lexeme
         if token_category == TokenCategory.ERROR:
             lexeme = self.__get_malformed_lexeme(lexeme=lexeme)
-            self.errors.push(TokenError(
+            self.errors.push(LexicalError(
                 message=f"'{lexeme}' can´t be assign a token category.",
                 line=self.current_row_ix + 1,
                 column=self.current_col_ix
@@ -167,8 +166,7 @@ class Lexer:
             print(f"⚠️ Error: '{lexeme}' is a keyword.")
             return
         
-        print(f"✅ Token IDENTIFIER valid: '{lexeme}' in line {self.current_row_ix + 1}")
-        self.tokens.append(
+        self.symtab.tokens.append(
             Token( 
                 TokenCategory.IDENTIFIER,
                 lexeme,
@@ -192,14 +190,14 @@ class Lexer:
             try:
                 self.symtab.declare(lexeme, prev_tok.value, tok.row)
             except ValueError as e:
-                self.errors.push(TokenError(
+                self.errors.push(LexicalError(
                     message=str(e),
                     line=tok.row,
                     column=tok.column
                 ))
         else:
             if not self.symtab.is_declared(lexeme):
-                self.errors.push(TokenError(
+                self.errors.push(LexicalError(
                     message=f"Var '{lexeme}' used with no declaration.",
                     line=tok.row,
                     column=tok.column
@@ -269,7 +267,7 @@ class Lexer:
 
     def __read_keyword(self, lexeme):
         if not lexeme or lexeme not in self.keywords:
-            self.errors.push(TokenError(
+            self.errors.push(LexicalError(
                 message=f"'{lexeme}' no es keyword.",
                 line=self.current_row_ix + 1,
                 column=self.current_col_ix

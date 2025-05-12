@@ -1,13 +1,7 @@
-<<<<<<< HEAD
 $ Esto es un comentario
 Num @x = 10.
 Text @texto = "Hola Mundo".
 Bool @bandera = True.
-=======
-Num @x = 10.
-Text @texto = "Hola Mundo".
-Bool @bandera = true.
->>>>>>> 74db4672bad86f8c5fb1590428ace9c756181ab9
 
 If (@x > 5) {
    Write("x es mayor a 5");

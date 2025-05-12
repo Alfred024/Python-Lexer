@@ -1,24 +1,4 @@
 from enum import Enum
-from classes.ErrorsStack import LexicalErrorCode
-
-# TODO: Función para extraer la info. del error de un archivo txt.
-
-class TokenError:
-    def __init__(self, error_code : LexicalErrorCode = LexicalErrorCode.ERROR_UNDEFINED, message: str = '', line: int = -1, column: int = -1) -> None:
-        self._code = error_code
-        self._message = message
-        self._line = line
-        self._column = column
-
-    def __str__(self) -> str:
-        return (
-            f'''
-                ERROR {self._code}: ___({self._message})____[{self._line}, {self._column}]
-            '''
-        )
-
-tk = TokenError(message='Desc. del error', line=1, column=1)
-tk.__str__()
 
 class TokenCategory(Enum):
     IDENTIFIER           = "IDENTIFIER"
@@ -82,7 +62,6 @@ class TokenCode(Enum):
     
     ERROR                = 121
     NO_IDENTIFIED        = 122
-
 
 class Token:
     def __init__(self, category: TokenCategory, code : TokenCode = TokenCode.NO_IDENTIFIED, value : str = '', row: int = -1, column: int = -1):

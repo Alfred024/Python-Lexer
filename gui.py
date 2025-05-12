@@ -3,7 +3,7 @@ from tkinter import ttk, scrolledtext, PhotoImage, Toplevel, Label
 import re
 from classes.SymbolTable import SymbolTable
 from classes.Lexer import Lexer
-from classes.Token import TokenCategory, Token, TokenError
+from classes.Token import TokenCategory, Token
 import subprocess
 import os
 import sys
@@ -332,7 +332,7 @@ class LexerGUI:
         unique_errors = []
         seen = set()
         for err in lexer.errors.get_all():
-            key = (err._type, err._message, err._line, err._column)
+            key = (err._code, err._message, err._line, err._column)
             if key not in seen:
                 seen.add(key)
                 unique_errors.append(err)
@@ -341,7 +341,7 @@ class LexerGUI:
             # Obtener mensaje de ayuda personalizado
             help_message = self.get_help_message(err)
             self.error_tree.insert("", tk.END, values=(
-                err._type,
+                err._code,
                 help_message,
                 err._line,
                 err._column
@@ -351,7 +351,7 @@ class LexerGUI:
     def get_help_message(self, error):
         """Devuelve un mensaje de ayuda personalizado para el error"""
         default_message = error._message
-        error_type = error._type
+        error_code = error._code
         error_char = None
 
         # Intentar obtener el carácter que causó el error
@@ -366,8 +366,8 @@ class LexerGUI:
             pass
 
         # Buscar mensaje personalizado
-        if error_type in self.error_help_messages:
-            char_map = self.error_help_messages[error_type]
+        if error_code in self.error_help_messages:
+            char_map = self.error_help_messages[error_code]
             if error_char in char_map:
                 return char_map[error_char]
 

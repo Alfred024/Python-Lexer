@@ -1,10 +1,11 @@
 from classes.Token import Token, TokenCategory
+from classes.errors.ErrorsStack import ErrorsStack
 
 class Parser:
     def __init__(self, tokens: list[Token]):
         self.tokens = tokens
         self.pos    = 0
-        self.errors = []
+        self.errors = ErrorsStack()
 
     @property
     def look_ahead(self) -> Token:
@@ -21,7 +22,6 @@ class Parser:
 
     def error(self, msg: str):
         self.errors.append(f"[Linea {self.look_ahead.row}] {msg}")
-        # intentar recuperación mínima:
         self.pos += 1
 
     def parse_program(self):
@@ -152,15 +152,3 @@ class Parser:
             self.match(TokenCategory.DELIM_PARENT_RIGHT)
         else:
             self.error(f"Factor inválido: {self.look_ahead}")
-
-
-
-parser = Parser(symtab.tokens)
-parser.parse_program()
-
-if parser.errors:
-    print("Errores sintácticos:")
-    for e in parser.errors:
-        print(" ", e)
-else:
-    print("Análisis sintáctico exitoso.")
