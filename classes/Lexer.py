@@ -122,19 +122,14 @@ class Lexer:
         return lexeme
 
     def __get_malformed_lexeme(self, lexeme = ''):
-        pos = self.current_col_ix
+        pos = self.current_col_ix - 1
         while pos < len(self.row_list[self.current_row_ix]):
             char = self.row_list[self.current_row_ix][pos]
             lexeme += char
             pos += 1
             if char in alphabet.alphabet['spaces']:
                 break
-        self.current_col_ix = pos - 1
-        self.errors.push(LexicalError(
-            message=f'Lexeme "{lexeme}" not recognized.',
-            line=self.current_row_ix + 1,
-            column=self.current_col_ix
-        ))
+        self.current_col_ix = pos
         return lexeme
 
     def __set_error(self, token_category : TokenCategory, lexeme):
@@ -146,7 +141,7 @@ class Lexer:
                 column=self.current_col_ix
             ))
             return lexeme
-        if token_category == TokenCategory.ERROR:
+        elif token_category == TokenCategory.ERROR:
             lexeme = self.__get_malformed_lexeme(lexeme=lexeme)
             self.errors.push(LexicalError(
                 message=f"'{lexeme}' can´t be assign a token category.",
@@ -154,27 +149,33 @@ class Lexer:
                 column=self.current_col_ix
             ))
         else:
-            print('NO IDENTIFICADO...')
-            pass
+            self.errors.push(LexicalError(
+                message=f"'{lexeme}' can´t be assign a token category.",
+                line=self.current_row_ix + 1,
+                column=self.current_col_ix
+            ))
 
+    # TODO: Cunado se declara un identificador sin asignarle un valor, se debe de inicializar con un valor por defecto
     def __read_identifier(self, lexeme):
-        if len(lexeme[1:]) > 16: # Validation of lenght counting the '@' char 
-            print(f"⚠️ Error: IDENTIFIER '{lexeme}' lenght is {len(lexeme[1:])}. Lexeme must have 15 chars as maximum.")
+        if lexeme == '':
             return
         
-        if lexeme[1:] in self.keywords: # Validation of no keyword lexeme
-            print(f"⚠️ Error: '{lexeme}' is a keyword.")
+        if len(lexeme) <= 1 or len(lexeme) > 16:
+            self.errors.push(LexicalError(
+                message=f"'{lexeme}' is too large.",
+                line=self.current_row_ix + 1,
+                column=self.current_col_ix
+            ))
             return
         
-        self.symtab.tokens.append(
-            Token( 
-                TokenCategory.IDENTIFIER,
-                lexeme,
-                self.current_row_ix,
-                self.current_col_ix - len(lexeme)
-            )
-        )
-        
+        if lexeme[1:] in self.keywords:
+            self.errors.push(LexicalError(
+                message=f"'{lexeme}' can´t be a keyword.",
+                line=self.current_row_ix + 1,
+                column=self.current_col_ix
+            ))
+            return
+
         tok = Token(
                     TokenCategory.IDENTIFIER,
                     TokenCode.IDENTIFIER,

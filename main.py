@@ -10,11 +10,5 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = LexerGUI(root)
     root.geometry("1200x800")
-    root.mainloop()
-    
-    # # Token creation    
-    # lexer = Lexer(project_config['sample_code_file'])
-    # for token in lexer.tokens:
-    #     print(token)
-        
+    root.mainloop()        
     
