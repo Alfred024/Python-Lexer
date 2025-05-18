@@ -22,6 +22,8 @@ from data.TransitionMatrixes.number_matrix import NumberStates
 import data.TransitionMatrixes.number_matrix as number_matrix
 from data.TransitionMatrixes.text_matrix import TextStates
 import data.TransitionMatrixes.text_matrix as text_matrix
+# Regular expressions
+import re
 
 
 class Lexer:
@@ -42,8 +44,17 @@ class Lexer:
         self.__read_input()
 
     def __read_input(self):
-        with open(self.file_input, 'r') as file:
-            self.row_list = [line.rstrip("\n") for line in file]
+        try:
+            with open(self.file_input, 'r', encoding='utf-8') as file:
+                self.row_list = [line.rstrip("\n") for line in file]
+        except FileNotFoundError:
+            self.errors.push(LexicalError(
+                error_code=LexicalErrorCode.ERROR_UNDEFINED,
+                line=1,
+                column=1
+            ))
+            self.row_list = []
+            return
 
         while self.current_row_ix < len(self.row_list):
             self.current_col_ix = 0

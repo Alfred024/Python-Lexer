@@ -46,9 +46,13 @@ class CustomText(tk.Text):
         self._line_numbers.pack(side='left', fill='y')
         self.bind('<KeyPress>', self._on_key_press)
         self.bind('<KeyRelease>', self.on_key_release)
+        # Habilitar eventos de modificación
+        self.bind('<<Modified>>', self.on_modified)
         self._update_line_numbers()
         self.tooltip = None
         self.tooltip_id = None
+        # Activar la bandera de modificación para el widget
+        self.edit_modified(False)
 
     def _on_key_press(self, event=None):
         self._update_line_numbers()
@@ -67,6 +71,13 @@ class CustomText(tk.Text):
         self.highlight_syntax()
         if hasattr(self, "_callback"):
             self._callback()
+
+    def on_modified(self, event=None):
+        if self.edit_modified():
+            self.highlight_syntax()
+            if hasattr(self, "_callback"):
+                self._callback()
+            self.edit_modified(False)  # Resetear la bandera de modificación
 
     def highlight_syntax(self):
         for tag in ["comment", "keyword", "identifier", "operator",
@@ -166,7 +177,7 @@ class LexerGUI:
         menu.add_command(label="Guía Léxica", command=lambda: self.open_pdf("guides/Análisis_léxico.pdf"))
         menu.add_command(label="Guía Sintáctica", command=lambda: self.open_pdf("guides/Análisis_sintáctico.pdf"))
         menu.add_command(label="Guía Semántica", command=lambda: self.open_pdf("guides/Análisis_semántico.pdf"))
-        menu.add_command(label="Guía Lenguaje", command=lambda: self.open_pdf("guides/Guia_lenguaje.pdf"))
+        menu.add_command(label="Guía Lenguaje", command=lambda: self.open_pdf("guards/Guia_lenguaje.pdf"))
         guide_menu["menu"] = menu
         guide_menu.pack(side="left", padx=(0, 10))
         about_button = ttk.Button(top_frame, text="About Us", command=self.show_about_us)
@@ -354,7 +365,7 @@ class LexerGUI:
 
     def save_file(self):
         if self.current_file:
-            content = self.code_editor.get(1.0, tk.END)
+            content = self.code_editor.get("1.0", tk.END)
             with open(self.current_file, 'w', encoding='utf-8') as file:
                 file.write(content)
         else:
