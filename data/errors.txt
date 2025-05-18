@@ -1,0 +1,9 @@
+4000:Error léxico. Identificador mal formado.
+4001:Error léxico. No se puede asignar una categoría de token a este carácter.
+4002:Error léxico. El identificador es demasiado largo o corto.
+4003:Error léxico. El identificador no puede ser una palabra clave.
+4004:Error léxico. La variable ya está declarada.
+4005:Error léxico. La variable se usó sin ser declarada.
+4006:Error léxico. No es una palabra clave válida.
+4007:Error léxico. Número o cadena mal formada.
+4011:Error léxico. Error no definido.
