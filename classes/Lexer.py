@@ -101,13 +101,19 @@ class Lexer:
         lexeme = ""
         state = states.INI_STATE
 
+        if token_category == TokenCategory.COMMENT:
+            # Para comentarios, capturar desde $ hasta el final de la línea
+            lexeme = self.row_list[self.current_row_ix][self.current_col_ix:]
+            self.current_col_ix = len(self.row_list[self.current_row_ix])
+            return lexeme
+
         while self.current_col_ix < len(self.row_list[self.current_row_ix]):
             char = self.row_list[self.current_row_ix][self.current_col_ix]
             state = matrix.get(state, {}).get(char)
 
             if state is None:
                 break
-            
+
             if state == states.ERROR_STATE:
                 self.__set_error(token_category, lexeme)
                 return ''
@@ -117,7 +123,7 @@ class Lexer:
 
             if state == states.END_STATE:
                 break
-        
+
         self.current_col_ix -= 1
         return lexeme
 
@@ -155,7 +161,7 @@ class Lexer:
                 column=self.current_col_ix
             ))
 
-    # TODO: Cunado se declara un identificador sin asignarle un valor, se debe de inicializar con un valor por defecto
+    # TODO: Cuando se declara un identificador sin asignarle un valor, se debe de inicializar con un valor por defecto
     def __read_identifier(self, lexeme):
         if lexeme == '':
             return
@@ -259,12 +265,16 @@ class Lexer:
                                     self.current_col_ix))
 
     def __read_comment(self, lexeme):
-        self.symtab.add_token(Token(
-                                    TokenCategory.COMMENT, 
-                                    TokenCode.COMMENT,
-                                    lexeme,
-                                    self.current_row_ix + 1,
-                                    self.current_col_ix))
+        if lexeme:
+            self.symtab.add_token(Token(
+                TokenCategory.COMMENT,
+                TokenCode.COMMENT,
+                lexeme,
+                self.current_row_ix + 1,
+                self.current_col_ix - len(lexeme) + 1  # Ajustar columna para señalar el inicio del comentario
+            ))
+        # Mover el índice al final de la línea para ignorar el resto
+        self.current_col_ix = len(self.row_list[self.current_row_ix])
 
     def __read_keyword(self, lexeme):
         if not lexeme or lexeme not in self.keywords:

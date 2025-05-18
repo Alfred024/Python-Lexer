@@ -88,8 +88,18 @@ class CustomText(tk.Text):
             "string": r'"[^"]*"'
         }
 
+        # Procesar comentarios primero
         for ln, line in enumerate(content.split("\n"), 1):
+            comment_match = re.search(patterns["comment"], line)
+            if comment_match:
+                start, end = f"{ln}.{comment_match.start()}", f"{ln}.{comment_match.end()}"
+                self.tag_add("comment", start, end)
+                continue  # Saltar el procesamiento de otros patrones en esta línea
+
+            # Procesar otros patrones solo si no es un comentario
             for tag, pat in patterns.items():
+                if tag == "comment":
+                    continue
                 for m in re.finditer(pat, line):
                     start, end = f"{ln}.{m.start()}", f"{ln}.{m.end()}"
                     self.tag_add(tag, start, end)
