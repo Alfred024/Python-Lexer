@@ -10,6 +10,8 @@ from classes.errors.ErrorsStack import ErrorsStack
 import subprocess
 import os
 import sys
+import webbrowser
+from tkinter import messagebox
 import data.alphabet as alphabet
 from data.TransitionMatrixes.identifier_matrix import IdentifierStates
 import data.TransitionMatrixes.identifier_matrix as id_matrix
@@ -174,10 +176,10 @@ class LexerGUI:
         top_frame.grid(row=0, column=0, columnspan=3, sticky="nsew", padx=10, pady=5)
         guide_menu = ttk.Menubutton(top_frame, text="Open Guides", direction="below")
         menu = tk.Menu(guide_menu, tearoff=0)
-        menu.add_command(label="Guía Léxica", command=lambda: self.open_pdf("guides/Análisis_léxico.pdf"))
-        menu.add_command(label="Guía Sintáctica", command=lambda: self.open_pdf("guides/Análisis_sintáctico.pdf"))
-        menu.add_command(label="Guía Semántica", command=lambda: self.open_pdf("guides/Análisis_semántico.pdf"))
-        menu.add_command(label="Guía Lenguaje", command=lambda: self.open_pdf("guards/Guia_lenguaje.pdf"))
+        menu.add_command(label="Guía Léxica", command=lambda: self.open_pdf("https://drive.google.com/file/d/1-G4Ma0HKbx-xyKwdZs7pIHqICJ1NYRZA/view?usp=sharing"))
+        menu.add_command(label="Guía Sintáctica", command=lambda: self.open_pdf("https://drive.google.com/file/d/13Z528bi9w-vK2FFX8K5XsM1ZfvbKomOB/view?usp=sharing"))
+        menu.add_command(label="Guía Semántica", command=lambda: self.open_pdf("https://drive.google.com/file/d/1GZ16CPO7RLuO6AnULWygA5RrorPaJ19A/view?usp=sharing"))
+        menu.add_command(label="Guía Lenguaje", command=lambda: self.open_pdf("https://drive.google.com/file/d/1xp75PE4ScH8vCl7PpOz-9XtvGVu6difN/view?usp=sharing"))
         guide_menu["menu"] = menu
         guide_menu.pack(side="left", padx=(0, 10))
         about_button = ttk.Button(top_frame, text="About Us", command=self.show_about_us)
@@ -193,6 +195,8 @@ class LexerGUI:
             print("No se pudo cargar el logo del compilador:", e)
             ttk.Label(compiler_frame, text="[LOGO]").pack(side="left")
         try:
+            exit_button = ttk.Button(top_frame, text="Exit", command=self.confirm_exit)
+            exit_button.pack(side="left", padx=(0, 10))
             self.logo_image = PhotoImage(file="images/logo_tecnm.png")
             self.logo_image = self.logo_image.subsample(3, 3)
             logo_label = ttk.Label(top_frame, image=self.logo_image)
@@ -306,17 +310,15 @@ class LexerGUI:
                 return char_map[error_char]
         return default_message
 
-    def open_pdf(self, filename):
+    def open_pdf(self, url):
         try:
-            filepath = os.path.abspath(filename)
-            if os.name == 'nt':
-                os.startfile(filepath)
-            elif sys.platform == 'darwin':
-                subprocess.Popen(['open', filepath])
-            else:
-                subprocess.Popen(['xdg-open', filepath])
+            webbrowser.open(url)
         except Exception as e:
-            print("Error al abrir PDF:", e)
+            print("Error al abrir PDF desde la web:", e)
+    
+    def confirm_exit(self):
+        if messagebox.askyesno("Confirmation", "Are you sure you want to leave?"):
+            self.root.quit()
 
     def show_about_us(self):
         about = Toplevel(self.root)

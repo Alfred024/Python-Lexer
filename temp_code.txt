@@ -1,22 +1,17 @@
-$ Esto es un comentario
 Num @x = 10.
 Text @texto = "Hola Mundo".
-Bool @bandera = True.
+Bool @bandera = true.
 
-If (@x > 5) {
-   Write("x es mayor a 5").
+If (x > 5) {
+   Write("x es mayor a 5");
 } Else {
-   Write("x es menor o igual a 5").
+   Write("x es menor o igual a 5");
 }
 
-While (@x < 20) {
-   @x = @x + 1.
-}
-$lol
-For (Num i = 0. i < 3. i = i + 1) {    
-   Write(i).
+While (x < 20) {
+   @x = @x + 1;
 }
 
-( @ola ) {
-    @adios.
+For (Num i = 0; i < 3; i = i + 1) {
+   Write(i);
 }
