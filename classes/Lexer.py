@@ -54,6 +54,16 @@ class Lexer:
                 self.__categorize_char(char)
                 self.current_col_ix += 1
             self.current_row_ix += 1
+        
+        # End of the program
+        tok_eof = Token(
+            TokenCategory.EOF,
+            TokenCode.EOF,
+            '',
+            self.current_row_ix,
+            self.current_col_ix
+        )
+        self.symtab.add_token(tok_eof)
 
     # TODO: Inidicar la instrucción que si el lexema es "", lo apendice como un error
     def __categorize_char(self, char: str):
@@ -63,10 +73,11 @@ class Lexer:
                                         id_matrix.identifier_matrix)
             self.__read_identifier(lexeme)
         elif char == '$':
+            # TODO: Quitar la construcción del lexema cuando vea un comentario
             lexeme = self.__get_lexeme(TokenCategory.COMMENT,
                                         CommentStates,
                                         comment_matrix.comment_matrix)
-            self.__read_comment(lexeme)
+            # self.__read_comment(lexeme)
         elif char in 'NTBWFIER':  # inicio posible keyword
             lexeme = self.__get_lexeme(TokenCategory.KEYWORD,
                                         KeywordStates,
@@ -258,13 +269,13 @@ class Lexer:
                                     self.current_row_ix + 1,
                                     self.current_col_ix))
 
-    def __read_comment(self, lexeme):
-        self.symtab.add_token(Token(
-                                    TokenCategory.COMMENT, 
-                                    TokenCode.COMMENT,
-                                    lexeme,
-                                    self.current_row_ix + 1,
-                                    self.current_col_ix))
+    # def __read_comment(self, lexeme):
+    #     self.symtab.add_token(Token(
+    #                                 TokenCategory.COMMENT, 
+    #                                 TokenCode.COMMENT,
+    #                                 lexeme,
+    #                                 self.current_row_ix + 1,
+    #                                 self.current_col_ix))
 
     def __read_keyword(self, lexeme):
         if not lexeme or lexeme not in self.keywords:

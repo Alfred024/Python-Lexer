@@ -23,7 +23,6 @@ identifier_matrix = {
         **{space: IdentifierStates.END_STATE for space in spaces},
         '.': IdentifierStates.END_STATE,
         **{number: IdentifierStates.ERROR_STATE for number in numbers},
-        '-': IdentifierStates.BODY_STATE,
     },
     IdentifierStates.BODY_STATE: {
         **{char: IdentifierStates.BODY_STATE for char in chars},

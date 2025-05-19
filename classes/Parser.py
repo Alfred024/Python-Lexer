@@ -1,154 +1,155 @@
-from classes.Token import Token, TokenCategory
-from classes.errors.ErrorsStack import ErrorsStack
+import data.grammatic as grammatic
+from collections import defaultdict, deque
+# from classes.SymbolTable import SymbolTable
 
-class Parser:
-    def __init__(self, tokens: list[Token]):
-        self.tokens = tokens
-        self.pos    = 0
-        self.errors = ErrorsStack()
+EPSILON = "ε"
+EOF = "$" # ! Este EOF se podría confundir con el inicio de un Token de tipo COMMENT
 
-    @property
-    def look_ahead(self) -> Token:
-        return self.tokens[self.pos] if self.pos < len(self.tokens) else Token(TokenCategory.EOF)
+# Creación de terminakles y no terminales
+# Manejo de set para no permitir elementos duplicados.
+non_terminals = set(grammatic.grammar.keys())
+terminals = set()
+for rhss in grammatic.grammar.values():
+    for right_hand_side in rhss:
+        for sym in right_hand_side:
+            if sym not in non_terminals and sym != EPSILON:
+                terminals.add(sym)
+terminals.add(EOF)
+terminals.add(EPSILON)
 
-    def match(self, cat: TokenCategory):
-        if self.look_ahead.category == cat:
-            tok = self.look_ahead
-            self.pos += 1
-            return tok
-        else:
-            self.error(f"Se esperaba {cat}, se encontró {self.look_ahead.category}")
-            return None
+print('non_terminals:')
+print(non_terminals)
+print('\n')
+print('terminals:')
+print(terminals)
 
-    def error(self, msg: str):
-        self.errors.append(f"[Linea {self.look_ahead.row}] {msg}")
-        self.pos += 1
+# ───── 3) CÁLCULO DE FIRST y FOLLOW ─────────────────────────────────────
+# Creación de un diccionario de datos 'valor': set()
+FIRST = { X:set() for X in non_terminals } # Los primeros elementos terminales de la derivación de un no terminal
+FOLLOW = { X:set() for X in non_terminals } #  Los primeros elementos terminales que aparecen inmediatamente después de un no terminal
+# Inicializa FIRST para terminales
+for t in terminals:
+    FIRST[t] = {t}
 
-    def parse_program(self):
-        self.parse_lista_sentencias()
-        self.match(TokenCategory.EOF)
+# Obtiene los FIRST de la gramática
+changed = True
+while changed:
+    changed = False
+    for A, rhss in grammatic.grammar.items():
+        for right_hand_side in rhss:
+            # union FIRST(right_hand_side) \ {ε} en FIRST[A]
+            first_rhs = set()
+            nullable = True
+            for sym in right_hand_side:
+                # print(f'sym: {sym}')
+                first_rhs |= (FIRST[sym] - {EPSILON})
+                # print(f'first_rhs: {first_rhs}')
+                if EPSILON not in FIRST[sym]:
+                    nullable = False
+                    break
+            if nullable:
+                first_rhs.add(EPSILON)
+            if not first_rhs <= FIRST[A]:
+                FIRST[A] |= first_rhs
+                changed = True
 
-    # ? Porqué aquí excluye cualquier cosa que no sea una KEYWORD o un IDENTIFIER? No sé si a lo mejor lo pusimos en las reglas de la gramática y se me está pasando ver eso, pero que yo sepa, si a un compilador le pasas un archivo que solo tenga un 10 por ejemplo, no marca error ni nada.
-    def parse_lista_sentencias(self):
-        # ListaSentencias → Sentencia ListaSentencias | ε
-        while self.look_ahead.category in {
-            TokenCategory.KEYWORD,       # Num, Text, Bool, If, While, For, Read, Write
-            TokenCategory.IDENTIFIER,
-        }:
-            self.parse_sentencia()
+# Obtiene los FOLLOW de la gramática
+FOLLOW["Programa"].add(EOF)
+changed = True
+while changed:
+    changed = False
+    for A, rhss in grammatic.grammar.items():
+        for right_hand_side in rhss:
+            trailer = FOLLOW[A].copy()
+            for sym in reversed(right_hand_side):
+                if sym in non_terminals:
+                    if not trailer <= FOLLOW[sym]:
+                        FOLLOW[sym] |= trailer
+                        changed = True
+                    if EPSILON in FIRST[sym]:
+                        trailer |= (FIRST[sym] - {EPSILON})
+                    else:
+                        trailer = FIRST[sym].copy()
+                else:
+                    trailer = FIRST[sym].copy()
+                    
+                    
+print('\n')
+print('FIRST: ')
+print(FIRST)
+print('\n')
+print('FOLLOW: ')
+print(FOLLOW)
 
-    def parse_sentencia(self):
-        cat = self.look_ahead.category
-        val = self.look_ahead.value
-        
-        if cat == TokenCategory.KEYWORD and val in {"Num","Text","Bool"}:
-            self.parse_declaracion()
-        elif cat == TokenCategory.IDENTIFIER:
-            self.parse_asignacion()
-        elif cat == TokenCategory.KEYWORD and val == "If":
-            self.parse_if()
-        elif cat == TokenCategory.KEYWORD and val == "While":
-            self.parse_while()
-        elif cat == TokenCategory.KEYWORD and val == "For":
-            self.parse_for()
-        elif cat == TokenCategory.KEYWORD and val == "Read":
-            self.parse_read()
-        elif cat == TokenCategory.KEYWORD and val == "Write":
-            self.parse_write()
-        else:
-            self.error(f"Sentencia inválida al inicio: {self.look_ahead}")
+# # ───── 4) CONSTRUIR TABLA LL(1) ───────────────────────────────────────────
+# # tabla[(NoTerm, terminal)] = producción (lista de símbolos)
+# parse_table = {}
+# for A, rhss in grammatic.grammar.items():
+#     for right_hand_side in rhss:
+#         # FIRST(right_hand_side)
+#         first_rhs = set()
+#         nullable = True
+#         for sym in right_hand_side:
+#             first_rhs |= (FIRST[sym] - {EPSILON})
+#             if EPSILON not in FIRST[sym]:
+#                 nullable = False
+#                 break
+#         for t in first_rhs - {EPSILON}:
+#             parse_table[(A,t)] = right_hand_side
+#         if nullable:
+#             for b in FOLLOW[A]:
+#                 parse_table[(A,b)] = right_hand_side
 
-    def parse_declaracion(self):
-        tipo = self.match(TokenCategory.KEYWORD)    # Num/Text/Bool
-        ident= self.match(TokenCategory.IDENTIFIER)
-        if self.look_ahead.category == TokenCategory.ASIG_OPER:
-            self.match(TokenCategory.ASIG_OPER)
-            self.parse_expresion()
-        self.match(TokenCategory.DELIM_POINT)
+# # ───── 5) PARSER PREDICTIVO DIRIGIDO POR TABLA ────────────────────────────
+# class TableParser:
+#     def __init__(self, tokens: list[Token], symtab: SymbolTable):
+#         # tokens deben terminar con un EOF token
+#         self.tokens = tokens
+#         self.symtab = symtab
+#         self.stack  = deque()
+#         self.stack.append(EOF)
+#         self.stack.append("Programa")
+#         self.pos = 0
 
-    def parse_asignacion(self):
-        ident = self.match(TokenCategory.IDENTIFIER)
-        self.match(TokenCategory.ASIG_OPER)
-        self.parse_expresion()
-        self.match(TokenCategory.DELIM_POINT)
+#     @property
+#     def la(self) -> Token:
+#         return self.tokens[self.pos]
 
-    def parse_if(self):
-        self.match(TokenCategory.KEYWORD)           # If
-        self.match(TokenCategory.DELIM_PARENT_LEFT) # '('
-        self.parse_condicion()
-        self.match(TokenCategory.DELIM_PARENT_RIGHT)
-        self.match(TokenCategory.DELIM_BRACE_LEFT)  # '{'
-        self.parse_lista_sentencias()
-        self.match(TokenCategory.DELIM_BRACE_RIGHT) # '}'
-        if self.look_ahead.category == TokenCategory.KEYWORD and self.look_ahead.value == "Else":
-            self.match(TokenCategory.KEYWORD)
-            self.match(TokenCategory.DELIM_BRACE_LEFT)
-            self.parse_lista_sentencias()
-            self.match(TokenCategory.DELIM_BRACE_RIGHT)
+#     def error(self, msg):
+#         raise SyntaxError(f"[Linea {self.la.row}] {msg}")
 
-    def parse_while(self):
-        self.match(TokenCategory.KEYWORD)  # While
-        self.match(TokenCategory.DELIM_PARENT_LEFT)
-        self.parse_condicion()
-        self.match(TokenCategory.DELIM_PARENT_RIGHT)
-        self.match(TokenCategory.DELIM_BRACE_LEFT)
-        self.parse_lista_sentencias()
-        self.match(TokenCategory.DELIM_BRACE_RIGHT)
+#     def parse(self):
+#         while self.stack:
+#             top = self.stack.pop()
+#             look = self.la
 
-    def parse_for(self):
-        self.match(TokenCategory.KEYWORD)  # For
-        self.match(TokenCategory.DELIM_PARENT_LEFT)
-        # Asignación inicial
-        if self.look_ahead.category == TokenCategory.IDENTIFIER:
-            self.parse_asignacion()
-        self.parse_condicion()
-        self.match(TokenCategory.DELIM_POINT)
-        self.parse_asignacion()
-        self.match(TokenCategory.DELIM_PARENT_RIGHT)
-        self.match(TokenCategory.DELIM_BRACE_LEFT)
-        self.parse_lista_sentencias()
-        self.match(TokenCategory.DELIM_BRACE_RIGHT)
+#             # 1) Acción semántica integrada
+#             #    (no la usamos aquí; podrías insertar callables en la RHS)
 
-    def parse_read(self):
-        self.match(TokenCategory.KEYWORD)          # Read
-        self.match(TokenCategory.DELIM_PARENT_LEFT)
-        self.match(TokenCategory.IDENTIFIER)
-        self.match(TokenCategory.DELIM_PARENT_RIGHT)
-        self.match(TokenCategory.DELIM_POINT)
+#             # 2) Si es terminal:
+#             if top in terminals:
+#                 # Comparar literal vs categorías
+#                 if ((top == look.category.name) or
+#                     (top == look.value) or
+#                     (top == EOF and look.category==TokenCategory.EOF)):
+#                     self.pos += 1
+#                 else:
+#                     self.error(f"Se esperaba '{top}', se encontró '{look.value}'")
+#             # 3) Si es no-terminal:
+#             elif top in non_terminals:
+#                 key = (top, look.value) if (top, look.value) in parse_table else (top, look.category.name)
+#                 prod = parse_table.get(key)
+#                 if not prod:
+#                     self.error(f"No hay producción para ({top}, {look.value})")
+#                 # Push en orden inverso, omitiendo ε
+#                 for sym in reversed(prod):
+#                     if sym != EPSILON:
+#                         self.stack.append(sym)
+#             else:
+#                 self.error(f"Símbolo desconocido en pila: {top}")
 
-    def parse_write(self):
-        self.match(TokenCategory.KEYWORD)          # Write
-        self.match(TokenCategory.DELIM_PARENT_LEFT)
-        self.parse_expresion()
-        self.match(TokenCategory.DELIM_PARENT_RIGHT)
-        self.match(TokenCategory.DELIM_POINT)
+#         # Al final, si consumimos todo
+#         if self.la.category != TokenCategory.EOF:
+#             self.error("Tokens sobrantes tras parsear")
 
-    def parse_condicion(self):
-        self.parse_expresion()
-        if self.look_ahead.category in {TokenCategory.REL_OPER, TokenCategory.LOG_OPER}:
-            self.pos += 1  # consumir operador
-            self.parse_expresion()
-
-    def parse_expresion(self):
-        self.parse_termino()
-        while self.look_ahead.category in {TokenCategory.ARIT_OPER} and self.look_ahead.value in ['+','-']:
-            self.pos += 1
-            self.parse_termino()
-
-    def parse_termino(self):
-        self.parse_factor()
-        while self.look_ahead.category in {TokenCategory.ARIT_OPER} and self.look_ahead.value in ['*','/']:
-            self.pos += 1
-            self.parse_factor()
-
-    def parse_factor(self):
-        if self.look_ahead.category == TokenCategory.NUM:
-            self.pos += 1
-        elif self.look_ahead.category == TokenCategory.IDENTIFIER:
-            self.pos += 1
-        elif self.look_ahead.category == TokenCategory.DELIM_PARENT_LEFT:
-            self.match(TokenCategory.DELIM_PARENT_LEFT)
-            self.parse_expresion()
-            self.match(TokenCategory.DELIM_PARENT_RIGHT)
-        else:
-            self.error(f"Factor inválido: {self.look_ahead}")
+#         return True
