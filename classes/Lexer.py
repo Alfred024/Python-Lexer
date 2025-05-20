@@ -77,7 +77,7 @@ class Lexer:
             lexeme = self.__get_lexeme(TokenCategory.COMMENT,
                                         CommentStates,
                                         comment_matrix.comment_matrix)
-            # self.__read_comment(lexeme)
+            self.__read_comment(lexeme)
         elif char in 'NTBWFIER':  # inicio posible keyword
             lexeme = self.__get_lexeme(TokenCategory.KEYWORD,
                                         KeywordStates,
@@ -269,13 +269,13 @@ class Lexer:
                                     self.current_row_ix + 1,
                                     self.current_col_ix))
 
-    # def __read_comment(self, lexeme):
-    #     self.symtab.add_token(Token(
-    #                                 TokenCategory.COMMENT, 
-    #                                 TokenCode.COMMENT,
-    #                                 lexeme,
-    #                                 self.current_row_ix + 1,
-    #                                 self.current_col_ix))
+    def __read_comment(self, lexeme):
+        self.symtab.add_token(Token(
+                                    TokenCategory.COMMENT, 
+                                    TokenCode.COMMENT,
+                                    lexeme,
+                                    self.current_row_ix + 1,
+                                    self.current_col_ix))
 
     def __read_keyword(self, lexeme):
         if not lexeme or lexeme not in self.keywords:
