@@ -1,9 +1,11 @@
+# GRAMÁTICA (NoTerminal → lista de RHS)
 EPSILON = "ε"
 EOF = "$" # ! Este EOF se podría confundir con el inicio de un Token de tipo COMMENT
 
-# GRAMÁTICA (NoTerminal → lista de RHS)
 grammar = {
-    "Programa": [["ListaSentencias"]],
+    "Programa": [
+        ["ListaSentencias"]
+    ],
     "ListaSentencias": [
         ["Sentencia", "ListaSentencias"],
         [EPSILON]
@@ -37,32 +39,38 @@ grammar = {
         ["While","(","Cond",")","{","ListaSentencias","}"]
     ],
     "ForSent": [
-        ["For","(","Asignacion","Cond",".","Asignacion",")","{","ListaSentencias","}"]
+        ["For","(","Asignacion","Cond",".","Asignacion",")","{","ListaSentencias","}"],
+        ["For","(","Declaracion","Cond",".","Asignacion",")","{","ListaSentencias","}"],
     ],
     "ReadSent": [["Read","(","IDENTIFIER",")","."]],
     "WriteSent": [["Write","(","Exp",")","."]],
     "Cond": [
-        ["Exp","REL_OPER","Exp"],
-        ["Exp","LOG_OPER","Exp"],
-        ["(","Cond",")"]
+        ["(","Cond",")"],
+        ["Exp","Oper_Cond","Exp"],
+    ],
+    "Oper_Cond": [
+        ["REL_OPER"],
+        ["LOG_OPER"]
     ],
     "Exp": [
         ["Term","Exp'"]
     ],
     "Exp'": [
-        ["ARIT_OPER","+","Term","Exp'"],
-        ["ARIT_OPER","-","Term","Exp'"],
+        ["+", "Term", "Exp'"],
+        ["-", "Term", "Exp'"],
         [EPSILON]
     ],
     "Term": [["Factor","Term'"]],
     "Term'": [
-        ["ARIT_OPER","*","Factor","Term'"],
-        ["ARIT_OPER","/","Factor","Term'"],
+        ["*","Factor","Term'"],
+        ["/","Factor","Term'"],
         [EPSILON]
     ],
     "Factor":[
         ["IDENTIFIER"],
         ["NUM"],
+        ["TEXT"],
+        ["BOOL"],
         ["(","Exp",")"]
     ],
 }
