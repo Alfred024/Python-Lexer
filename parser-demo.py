@@ -6,10 +6,10 @@ from classes.Parser import TableParser
 
 symtab = SymbolTable()
 lexer = Lexer(project_config['sample_code_file'], symtab)
-print(f'Tokens \n')
-for token in lexer.symtab.tokens:
-    print(token)
-print('\n')
+# print(f'Tokens \n')
+# for token in lexer.symtab.tokens:
+#     print(token)
+# print('\n')
 
 parser = TableParser(symtab.tokens, symtab)
 

@@ -120,10 +120,10 @@ class Lexer:
         lexeme = ""
         state = states.INI_STATE
 
-        if token_category == TokenCategory.COMMENT:
-            lexeme = self.row_list[self.current_row_ix][self.current_col_ix:]
-            self.current_col_ix = len(self.row_list[self.current_row_ix])
-            return lexeme
+        # if token_category == TokenCategory.COMMENT:
+        #     lexeme = self.row_list[self.current_row_ix][self.current_col_ix:]
+        #     self.current_col_ix = len(self.row_list[self.current_row_ix])
+        #     return lexeme
 
         while self.current_col_ix < len(self.row_list[self.current_row_ix]):
             char = self.row_list[self.current_row_ix][self.current_col_ix]

@@ -4,12 +4,10 @@ from collections import deque
 from classes.Token import Token, TokenCategory
 from classes.SymbolTable import SymbolTable
 
-# Creación de terminakles y no terminales
-# Manejo de set para no permitir elementos duplicados.
 class TableParser:
     def __init__(self, tokens: list[Token], symtab: SymbolTable):
-        # self.tokens = tokens + [ Token(TokenCategory.EOF, value=EOF, row=-1, column=-1) ]
-        self.tokens = tokens
+        self.sync_tokens = { TokenCategory.DELIM_BRACE_RIGHT, TokenCategory.DELIM_PARENT_RIGHT, TokenCategory.DELIM_POINT }
+        self.tokens = tokens + [ Token(TokenCategory.EOF, value=EOF, row=-1, column=-1) ]
         self.symtab = symtab
         self.stack  = deque()
         self.stack.append(EOF)
@@ -34,43 +32,78 @@ class TableParser:
     def look_ahead(self) -> Token:
         return self.tokens[self.pos]
 
-    def error(self, msg):
-        raise SyntaxError(f"[Linea {self.look_ahead.row}] {msg}")
-
+    def _panic(self, msg: str):
+        # 1) Reporta el error
+        print(f"[Error sintáctico] {msg} (línea {self.look_ahead.row})")
+        # 2) Descarta tokens hasta encontrar un punto de sincronización o EOF
+        while (self.pos < len(self.tokens)
+                and self.look_ahead.value not in self.sync_tokens
+                and self.look_ahead.category != TokenCategory.EOF):
+            self.pos += 1
+        # 3) Si hay un token de sincronización, lo consumimos (pero sin pasarnos de EOF)
+        if (self.pos < len(self.tokens)
+            and self.look_ahead.value in self.sync_tokens):
+            self.pos += 1
+        # Aseguramos que pos no sobrepase el índice del EOF
+        if self.pos >= len(self.tokens):
+            self.pos = len(self.tokens) - 1
+        # 4) Vacía la pila hasta el no terminal 'ListaSentencias'
+        while self.stack and self.stack[-1] != "ListaSentencias":
+            self.stack.pop()
+        # Al regresar, el bucle parse() seguirá intentando desde aquí
+        return
+    
     def parse(self):
         while self.stack:
+            # If we have EOF token, don´t process to search productions
+            if (self.look_ahead.category == TokenCategory.EOF):
+                return True
+
             top = self.stack.pop()
             look = self.look_ahead
-            print(f'Top: {top}')
-            print(f'Look: {look}')
-            # 1) Acción semántica integrada
-            #    (no la usamos aquí; podrías insertar callables en la RHS)
 
-            # 2) Si es terminal:
+            # The productions have finished because we reached EOF 
+            if top == EOF:
+                # si top=="#" pero lookahead no es el EOF esperado, es un verdadero error
+                # self.error(f"Se esperaba EOF, se encontró '{look.value}'")
+                return
+
+            # If its a terminal, dont evaluate productions and continue with the next Token
             if top in self.terminals:
-                # Comparar literal vs categorías
-                if ((top == look.category.name) or
-                    (top == look.value) or
-                    (top == EOF and look.category==TokenCategory.EOF)):
+                if (top == look.value) or (top == look.category.name):
                     self.pos += 1
+                    continue
                 else:
-                    self.error(f"Se esperaba '{top}', se encontró '{look.value}'")
-            # 3) Si es no-terminal:
-            elif top in self.non_terminals:
-                key = (top, look.value) if (top, look.value) in self.parse_table else (top, look.category.name)
+                    self._panic(f"Waiting for '{top}', but '{look.value}' founded instead")
+                    continue
+
+            # Parse no terminals token 
+            if top in self.non_terminals:
+                # Buscamos la producción:
+                if (top, look.value) in self.parse_table:
+                    key = (top, look.value)
+                else:
+                    key = (top, look.category.name)
+                
                 prod = self.parse_table.get(key)
-                if not prod:
-                    self.error(f"No hay producción para ({top}, {look.value})")
-                # Push en orden inverso, omitiendo ε
+                print(f'{(top, look.value)} ->   Prod: {prod}')
+
+                # Si no hay producción, pero el no‐terminal es nullable, lo omitimos
+                if prod is None:
+                    if EPSILON in self.first[top]:
+                        continue   # lo “comemos” implícitamente
+                    else:
+                        self._panic(f"No hay producción para ({top}, {look.value})")
+                        continue
+
+                # If theres a production, we expand it
                 for sym in reversed(prod):
                     if sym != EPSILON:
                         self.stack.append(sym)
-            else:
-                self.error(f"Símbolo desconocido en pila: {top}")
+                continue
 
-        # Al final, si consumimos todo
-        if self.look_ahead.category != TokenCategory.EOF:
-            self.error("Tokens sobrantes tras parsear")
+            # Unvalid symbol in the stack
+            self._panic(f"Símbolo desconocido en pila: {top}")
 
         return True
     
@@ -79,8 +112,8 @@ class TableParser:
         print(f'self.non_terminals: \n{self.non_terminals}\n')
     
     def __set_terminals(self):
-        for rhss in grammar.values():
-            for right_hand_side in rhss:
+        for rhs_statements in grammar.values():
+            for right_hand_side in rhs_statements:
                 for sym in right_hand_side:
                     if sym not in self.non_terminals and sym != EPSILON:
                         self.terminals.add(sym)
@@ -90,30 +123,25 @@ class TableParser:
         print(f'self.terminals: \n{self.terminals}\n')
 
     def __create_first(self):
-        self.first = { element : set() for element in self.non_terminals } # Los primeros elementos terminales de la derivación de un no terminal les establecerá en en 0 primero
-        # Cuando (A) es un terminal, el self.first de este será el mismo
+        # Set elements as empty to non_terminals
+        self.first = { element : set() for element in self.non_terminals } 
+        # Set first of a terminal as its own
         for terminal in self.terminals:
             self.first[terminal] = { terminal }
         
-        changed = True
+        changed = True  # Var to handle if the exploration in grammatic keep founding new productions
         while changed:
             changed = False
-
-            for A, rhss in grammar.items():
-                # Itera sobre todas las producciones de una gramática
-                # print(f'A: {A}')
-                for rhs in rhss:
+            for A, rhs_statements in grammar.items():
+                for rhs in rhs_statements:
                     # print(F'RHS de {A} --> {rhs}')
                     first_rhs = set()
                     nullable = True
                     for sym in rhs:
-                        # print(f'Symb de RHS: {sym}')
                         
-                        for terminal in self.first[sym]:
-                            # print(f'TERM de {sym}: {terminal}')
-                            # Si el terminal no es EPSILON, agrega a
-                            if terminal != EPSILON:
-                                first_rhs.add(terminal)
+                        for term in self.first[sym]:
+                            if term != EPSILON:
+                                first_rhs.add(term)
 
                         # Ese símbolo no puede ser nullable, por lo que deja de buscar en esa rhs un símbolo 
                         if EPSILON not in self.first[sym]:
@@ -124,11 +152,10 @@ class TableParser:
                         first_rhs.add(EPSILON)
                     
                     added_any = False
-                    for terminal in first_rhs:
-                        if terminal not in self.first[A]:
-                            # print(f'Voy a agregar {terminal} al elemento {A}')
-                            self.first[A].add(terminal)
-                            # print(self.first)
+                    for term in first_rhs:
+                        # Add first´s values founded 
+                        if term not in self.first[A]:
+                            self.first[A].add(term)
                             added_any = True
                     
                     if added_any:
@@ -137,24 +164,24 @@ class TableParser:
         print(f'self.first: \n{self.first}\n')
 
     def __create_follow(self):
-        self.follow = { X:set() for X in self.non_terminals }
+        self.follow = { element :set() for element in self.non_terminals }
         self.follow["Programa"].add(EOF)
         
         changed = True
         while changed:
             changed = False
 
-            for A, rhss in grammar.items():
-                for rhs in rhss:
+            for A, rhs_statements in grammar.items():
+                for rhs in rhs_statements:
                     trailer = []
                     for sym in self.follow[A]:
                         trailer.append(sym)
 
                     for sym in reversed(rhs):
                         if sym in self.non_terminals:
-                            for terminal in trailer:
-                                if terminal not in self.follow[sym]:
-                                    self.follow[sym].add(terminal)
+                            for term in trailer:
+                                if term not in self.follow[sym]:
+                                    self.follow[sym].add(term)
                                     changed = True
 
                             new_trailer = []
@@ -175,10 +202,9 @@ class TableParser:
         print(f'self.follow: \n{self.follow}\n')
 
     def __create_parse_table(self):
+        
         for nonterm, productions in grammar.items():
-            # Para cada regla A → RHS_list
             for rhs in productions:
-                # 1) Calcular self.first(rhs) de forma explícita
                 first_rhs = set()
                 nullable = True
 
@@ -203,17 +229,12 @@ class TableParser:
                     if t == EPSILON:
                         continue
                     key = (nonterm, t)
-                    # (Opcional) puedes avisar si sobrescribes una entrada:
-                    # if key in self.parse_table:
-                    #     print(f"Warning: M[{nonterm},{t}] ya estaba definido")
                     self.parse_table[key] = rhs
 
                 # 3) Si RHS es nullable, también se aplica para cada b en self.follow[A]
                 if nullable:
                     for b in self.follow[nonterm]:
                         key = (nonterm, b)
-                        # if key in self.parse_table:
-                        #     print(f"Warning: M[{nonterm},{b}] ya estaba definido por ε-producción")
                         self.parse_table[key] = rhs
                         
         print(f'PARSE TABLE: \n{self.parse_table}\n')

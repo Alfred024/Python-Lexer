@@ -1,6 +1,6 @@
 # GRAMÁTICA (NoTerminal → lista de RHS)
 EPSILON = "ε"
-EOF = "$" # ! Este EOF se podría confundir con el inicio de un Token de tipo COMMENT
+EOF = "#" # ! Este EOF se podría confundir con el inicio de un Token de tipo COMMENT
 
 grammar = {
     "Programa": [

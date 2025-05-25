@@ -15,7 +15,3 @@ While (@x < 20) {
 For (Num @i = 0. @i < 3. @i = @i + 1.) {    
    Write(@i).
 }
-
-( @ola ) {
-    @adios.
-}
