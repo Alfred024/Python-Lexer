@@ -7,7 +7,6 @@ class TokenCategory(Enum):
     NUM                  = "NUM"
     TEXT                 = "TEXT"
     BOOL                 = "BOOL"
-    COMMENT              = "COMMENT"
     OPERATOR             = "OPERATOR"
     ARIT_OPER            = "ARIT_OPER"
     REL_OPER             = "REL_OPER"
@@ -23,6 +22,7 @@ class TokenCategory(Enum):
     DELIM_BRACE_RIGHT    = "DELIM_BRACE_RIGHT"
     WHITESPACE           = "WHITESPACE"
     ERROR                = "ERROR"
+    EOF                  = "EOF"
 
 # DELIMS --> 0 -99
 # KEYWORDS -> 100 - 199
@@ -40,8 +40,6 @@ class TokenCode(Enum):
     NUM                  = 103
     TEXT                 = 104
     BOOL                 = 105
-    
-    COMMENT              = 106
     
     OPERATOR             = 107
     ARIT_OPER            = 108
@@ -62,6 +60,7 @@ class TokenCode(Enum):
     
     ERROR                = 121
     NO_IDENTIFIED        = 122
+    EOF                  = 123
 
 class Token:
     def __init__(self, category: TokenCategory, code : TokenCode = TokenCode.NO_IDENTIFIED, value : str = '', row: int = -1, column: int = -1):

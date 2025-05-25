@@ -63,6 +63,16 @@ class Lexer:
                 self.__categorize_char(char)
                 self.current_col_ix += 1
             self.current_row_ix += 1
+        
+        # End of the program
+        tok_eof = Token(
+            TokenCategory.EOF,
+            TokenCode.EOF,
+            '',
+            self.current_row_ix,
+            self.current_col_ix
+        )
+        self.symtab.add_token(tok_eof)
 
     def __categorize_char(self, char: str):
         if char == '@':
@@ -71,6 +81,7 @@ class Lexer:
                                        id_matrix.identifier_matrix)
             self.__read_identifier(lexeme)
         elif char == '$':
+            # TODO: Quitar la construcción del lexema cuando vea un comentario
             lexeme = self.__get_lexeme(TokenCategory.COMMENT,
                                        CommentStates,
                                        comment_matrix.comment_matrix)
