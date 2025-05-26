@@ -20,30 +20,40 @@ grammar = {
         ["WriteSent"]
     ],
     "Declaracion": [
-        ["Num", "IDENTIFIER", ".",],
-        ["Text", "IDENTIFIER", ".",],        
-        ["Bool","IDENTIFIER","."],
-        
-        ["Num","IDENTIFIER","=", "Exp","."],
-        ["Text","IDENTIFIER","=", "Exp","."],
-        ["Bool","IDENTIFIER","=","Exp","."],
+        ["Num", "IDENTIFIER", "DeclaracionDeriv"],
+        ["Text", "IDENTIFIER", "DeclaracionDeriv"],
+        ["Bool", "IDENTIFIER", "DeclaracionDeriv"],
+    ],
+    "DeclaracionDeriv": [
+        ["."] ,
+        ["=", "Exp", "."],
     ],
     "Asignacion": [
         ["IDENTIFIER","=","Exp","."]
     ],
     "IfSent": [
-        ["If","(","Cond",")","{","ListaSentencias","}"],
-        ["If","(","Cond",")","{","ListaSentencias","}","Else","{","ListaSentencias","}"],
+        ["If","(","Cond",")","{","ListaSentencias","}", "IfElse"],
+    ],
+    "IfElse": [
+        ["Else","{","ListaSentencias","}"],
+        [EPSILON]
     ],
     "WhileSent": [
         ["While","(","Cond",")","{","ListaSentencias","}"]
     ],
     "ForSent": [
-        ["For","(","Asignacion","Cond",".","Asignacion",")","{","ListaSentencias","}"],
-        ["For","(","Declaracion","Cond",".","Asignacion",")","{","ListaSentencias","}"],
+        ["For","(","ForInit","Cond",".","Asignacion",")","{","ListaSentencias","}"],
     ],
-    "ReadSent": [["Read","(","IDENTIFIER",")","."]],
-    "WriteSent": [["Write","(","Exp",")","."]],
+    "ForInit": [
+        ["Declaracion"],
+        ["Asignacion"],
+    ],
+    "ReadSent": [
+        ["Read","(","IDENTIFIER",")","."]
+    ],
+    "WriteSent": [
+        ["Write","(","Exp",")","."]
+    ],
     "Cond": [
         ["(","Cond",")"],
         ["Exp","Oper_Cond","Exp"],
@@ -60,7 +70,9 @@ grammar = {
         ["-", "Term", "Exp'"],
         [EPSILON]
     ],
-    "Term": [["Factor","Term'"]],
+    "Term": [
+        ["Factor","Term'"]
+    ],
     "Term'": [
         ["*","Factor","Term'"],
         ["/","Factor","Term'"],
