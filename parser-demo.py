@@ -6,16 +6,16 @@ from classes.Parser import TableParser
 
 symtab = SymbolTable()
 lexer = Lexer(project_config['sample_code_file'], symtab)
-# print(f'Tokens \n')
-# for token in lexer.symtab.tokens:
-#     print(token)
-# print('\n')
+print(f'Tokens')
+for token in lexer.symtab.tokens:
+    print(token)
+print('\n')
 
 parser = TableParser(symtab.tokens, symtab)
 
 try:
     parser.parse()
-    print("Sintactic succesfull!!")
+    print("Sintactic completed")
 except SyntaxError as e:
     print("Sintactic error:", e)
 

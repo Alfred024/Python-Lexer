@@ -6,7 +6,7 @@ from classes.SymbolTable import SymbolTable
 
 class TableParser:
     def __init__(self, tokens: list[Token], symtab: SymbolTable):
-        self.sync_tokens = { TokenCategory.DELIM_BRACE_RIGHT, TokenCategory.DELIM_PARENT_RIGHT, TokenCategory.DELIM_POINT }
+        self.sync_cats = { TokenCategory.DELIM_BRACE_RIGHT, TokenCategory.DELIM_PARENT_RIGHT, TokenCategory.DELIM_POINT }
         self.tokens = tokens + [ Token(TokenCategory.EOF, value=EOF, row=-1, column=-1) ]
         self.symtab = symtab
         self.stack  = deque()
@@ -33,74 +33,65 @@ class TableParser:
         return self.tokens[self.pos]
 
     def __panic(self, msg: str):
-        '''
-            If the parser catch an error, this method is in charge to look for the next no unvalid token by moving to token spcecified in sync_tokens.
-        '''
-        
+        # 1) Reportar
         print(f"[Sintactic error:] {msg} (row {self.look_ahead.row})")
-
+        # 2) Descarta hasta hallar uno de los sync_cats o EOF
         while (self.pos < len(self.tokens)
-                and self.look_ahead.value not in self.sync_tokens
-                and self.look_ahead.category != TokenCategory.EOF):
+               and self.look_ahead.category not in self.sync_cats
+               and self.look_ahead.category != TokenCategory.EOF):
             self.pos += 1
-        
+        # 3) Consume ese token de sincronización (si no es EOF)
         if (self.pos < len(self.tokens)
-            and self.look_ahead.value in self.sync_tokens):
+            and self.look_ahead.category in self.sync_cats):
             self.pos += 1
-        
+        # 4) Evita desbordarte
         if self.pos >= len(self.tokens):
             self.pos = len(self.tokens) - 1
-        
+        # 5) Resetea la pila hasta ListaSentencias
         while self.stack and self.stack[-1] != "ListaSentencias":
             self.stack.pop()
-
+        # Al volver al parse(), reexpandir ListaSentencias
         return
-    
+
     def parse(self):
         while self.stack:
-            # If we have EOF token, don´t process to search productions
-            if (self.look_ahead.category == TokenCategory.EOF):
+            # Si ya llegamos al EOF real, éxito
+            if self.look_ahead.category == TokenCategory.EOF:
                 return True
 
             top = self.stack.pop()
             look = self.look_ahead
 
-            # The productions have finished because we reached EOF 
-            if top == EOF:
-                return
-
-            # If its a terminal, dont evaluate productions and continue with the next Token
+            # Caso terminal
             if top in self.terminals:
                 if (top == look.value) or (top == look.category.name):
                     self.pos += 1
-                    continue
                 else:
+                    # Aquí saltamos a panic-mode
                     self.__panic(f"Waiting for '{top}', but '{look.value}' founded instead")
-                    continue
+                continue
 
-            # Parse no terminals token 
+            # Caso no-terminal
             if top in self.non_terminals:
-                # Search the production in parse_table
-                if (top, look.value) in self.parse_table:
-                    key = (top, look.value)
-                else:
-                    key = (top, look.category.name)
-                
+                key = ((top, look.value)
+                       if (top, look.value) in self.parse_table
+                       else (top, look.category.name))
                 prod = self.parse_table.get(key)
-
-                # Si no hay producción, pero el no‐terminal es nullable, lo omitimos
+                # Si no hay producción...
                 if prod is None:
+                    # Si puede ser ε, simplemente lo omitimos
                     if EPSILON in self.first[top]:
-                        continue   # lo “comemos” implícitamente
-                    else:
-                        self.__panic(f"No production founded for ({top}, {look.value})")
                         continue
-
-                # If theres a production, we expand it
+                    # Si no, panic-mode
+                    self.__panic(f"No production founded for ({top}, {look.value})")
+                    continue
+                # Expandir la producción
                 for sym in reversed(prod):
                     if sym != EPSILON:
                         self.stack.append(sym)
                 continue
+
+            # Cualquier otro caso inesperado
             self.__panic(f"Founded unknown symbol {top}")
 
         return True

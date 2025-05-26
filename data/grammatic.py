@@ -26,7 +26,7 @@ grammar = {
         
         ["Num","IDENTIFIER","=", "Exp","."],
         ["Text","IDENTIFIER","=", "Exp","."],
-        ["Bool","IDENTIFIER","=","Exp","."]
+        ["Bool","IDENTIFIER","=","Exp","."],
     ],
     "Asignacion": [
         ["IDENTIFIER","=","Exp","."]
