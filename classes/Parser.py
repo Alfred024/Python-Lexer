@@ -68,7 +68,7 @@ class TableParser:
                     self.pos += 1
                 else:
                     # Aquí saltamos a panic-mode
-                    self.__panic(f"Waiting for '{top}', but '{look.value}' founded instead")
+                    self.__panic(f"Waiting for '{top}', but '{look.value}' founded instead in column '{look.column}'")
                 continue
 
             # Caso no-terminal

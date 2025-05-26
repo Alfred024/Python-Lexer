@@ -55,12 +55,15 @@ grammar = {
         ["Write","(","Exp",")","."]
     ],
     "Cond": [
-        ["(","Cond",")"],
-        ["Exp","Oper_Cond","Exp"],
+        ["RelExpr", "CondPrime"]
     ],
-    "Oper_Cond": [
-        ["REL_OPER"],
-        ["LOG_OPER"]
+    "CondPrime": [
+        ["LOG_OPER", "RelExpr", "CondPrime"],
+        [EPSILON]
+    ],
+    "RelExpr": [
+        ["Exp", "REL_OPER", "Exp"],
+        ["(", "Cond", ")"]
     ],
     "Exp": [
         ["Term","Exp'"]
