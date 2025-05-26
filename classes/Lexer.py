@@ -34,9 +34,11 @@ class Lexer:
         self.current_row_ix = 0
         self.current_col_ix = 0
         self.row_list = []
-
+        # Data to help the capture of a complete error without skiping tokens.
+        self.valid_start_chars = [
+            "N", "T", "B", "W", "F", "I", "E", "R",
+        ] + list(alphabet.alphabet['delim_chars']) + list(alphabet.alphabet['oper_chars']) + list(alphabet.alphabet['numbers']) + list(alphabet.alphabet['text_delims'])
         self.declaration_types = {"Num", "Text", "Bool"}
-
         self.keywords = [
             "While", "For", "If", "Else", "Read", "Write",
             "Num", "Text", "Bool", "True", "False"
@@ -120,11 +122,6 @@ class Lexer:
         lexeme = ""
         state = states.INI_STATE
 
-        # if token_category == TokenCategory.COMMENT:
-        #     lexeme = self.row_list[self.current_row_ix][self.current_col_ix:]
-        #     self.current_col_ix = len(self.row_list[self.current_row_ix])
-        #     return lexeme
-
         while self.current_col_ix < len(self.row_list[self.current_row_ix]):
             char = self.row_list[self.current_row_ix][self.current_col_ix]
             state = matrix.get(state, {}).get(char)
@@ -134,7 +131,7 @@ class Lexer:
 
             if state == states.ERROR_STATE:
                 self.__set_error(token_category, lexeme)
-                return ''
+                return '# ERROR #'
 
             lexeme += char
             self.current_col_ix += 1
@@ -146,13 +143,15 @@ class Lexer:
         return lexeme
 
     def __get_malformed_lexeme(self, lexeme=''):
-        pos = self.current_col_ix - 1
+        pos = self.current_col_ix
+        
         while pos < len(self.row_list[self.current_row_ix]):
             char = self.row_list[self.current_row_ix][pos]
+            if char in self.valid_start_chars  or char in alphabet.alphabet['spaces']:
+                pos -= 1
+                break
             lexeme += char
             pos += 1
-            if char in alphabet.alphabet['spaces']:
-                break
         self.current_col_ix = pos
         return lexeme
 
@@ -164,8 +163,8 @@ class Lexer:
                 line=self.current_row_ix + 1,
                 column=self.current_col_ix
             ))
-            return lexeme
         elif token_category == TokenCategory.ERROR:
+            self.current_col_ix += 1
             lexeme = self.__get_malformed_lexeme(lexeme=lexeme)
             self.errors.push(LexicalError(
                 error_code=LexicalErrorCode.UNDEFINED_TOKEN,
@@ -178,14 +177,17 @@ class Lexer:
                 line=self.current_row_ix + 1,
                 column=self.current_col_ix
             ))
+         
+        self.symtab.add_token(Token(
+            TokenCategory.ERROR,
+            TokenCode.ERROR,
+            lexeme,
+            self.current_row_ix + 1,
+            self.current_col_ix
+        ))
 
     def __read_identifier(self, lexeme):
-        if lexeme == '':
-            self.errors.push(LexicalError(
-                error_code=LexicalErrorCode.IDENTIFIER_MALFORMED,
-                line=self.current_row_ix + 1,
-                column=self.current_col_ix
-            ))
+        if lexeme == '# ERROR #':
             return
 
         if len(lexeme) <= 1 or len(lexeme) > 16:
