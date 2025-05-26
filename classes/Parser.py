@@ -32,25 +32,28 @@ class TableParser:
     def look_ahead(self) -> Token:
         return self.tokens[self.pos]
 
-    def _panic(self, msg: str):
-        # 1) Reporta el error
-        print(f"[Error sintáctico] {msg} (línea {self.look_ahead.row})")
-        # 2) Descarta tokens hasta encontrar un punto de sincronización o EOF
+    def __panic(self, msg: str):
+        '''
+            If the parser catch an error, this method is in charge to look for the next no unvalid token by moving to token spcecified in sync_tokens.
+        '''
+        
+        print(f"[Sintactic error:] {msg} (row {self.look_ahead.row})")
+
         while (self.pos < len(self.tokens)
                 and self.look_ahead.value not in self.sync_tokens
                 and self.look_ahead.category != TokenCategory.EOF):
             self.pos += 1
-        # 3) Si hay un token de sincronización, lo consumimos (pero sin pasarnos de EOF)
+        
         if (self.pos < len(self.tokens)
             and self.look_ahead.value in self.sync_tokens):
             self.pos += 1
-        # Aseguramos que pos no sobrepase el índice del EOF
+        
         if self.pos >= len(self.tokens):
             self.pos = len(self.tokens) - 1
-        # 4) Vacía la pila hasta el no terminal 'ListaSentencias'
+        
         while self.stack and self.stack[-1] != "ListaSentencias":
             self.stack.pop()
-        # Al regresar, el bucle parse() seguirá intentando desde aquí
+
         return
     
     def parse(self):
@@ -64,8 +67,6 @@ class TableParser:
 
             # The productions have finished because we reached EOF 
             if top == EOF:
-                # si top=="#" pero lookahead no es el EOF esperado, es un verdadero error
-                # self.error(f"Se esperaba EOF, se encontró '{look.value}'")
                 return
 
             # If its a terminal, dont evaluate productions and continue with the next Token
@@ -74,26 +75,25 @@ class TableParser:
                     self.pos += 1
                     continue
                 else:
-                    self._panic(f"Waiting for '{top}', but '{look.value}' founded instead")
+                    self.__panic(f"Waiting for '{top}', but '{look.value}' founded instead")
                     continue
 
             # Parse no terminals token 
             if top in self.non_terminals:
-                # Buscamos la producción:
+                # Search the production in parse_table
                 if (top, look.value) in self.parse_table:
                     key = (top, look.value)
                 else:
                     key = (top, look.category.name)
                 
                 prod = self.parse_table.get(key)
-                print(f'{(top, look.value)} ->   Prod: {prod}')
 
                 # Si no hay producción, pero el no‐terminal es nullable, lo omitimos
                 if prod is None:
                     if EPSILON in self.first[top]:
                         continue   # lo “comemos” implícitamente
                     else:
-                        self._panic(f"No hay producción para ({top}, {look.value})")
+                        self.__panic(f"No production founded for ({top}, {look.value})")
                         continue
 
                 # If theres a production, we expand it
@@ -101,15 +101,12 @@ class TableParser:
                     if sym != EPSILON:
                         self.stack.append(sym)
                 continue
-
-            # Unvalid symbol in the stack
-            self._panic(f"Símbolo desconocido en pila: {top}")
+            self.__panic(f"Founded unknown symbol {top}")
 
         return True
     
     def __set_no_terminals(self):
         self.non_terminals = set(grammar.keys())
-        print(f'self.non_terminals: \n{self.non_terminals}\n')
     
     def __set_terminals(self):
         for rhs_statements in grammar.values():
@@ -120,7 +117,6 @@ class TableParser:
         
         self.terminals.add(EOF)
         self.terminals.add(EPSILON)
-        print(f'self.terminals: \n{self.terminals}\n')
 
     def __create_first(self):
         # Set elements as empty to non_terminals
@@ -161,8 +157,6 @@ class TableParser:
                     if added_any:
                         changed = True
 
-        print(f'self.first: \n{self.first}\n')
-
     def __create_follow(self):
         self.follow = { element :set() for element in self.non_terminals }
         self.follow["Programa"].add(EOF)
@@ -198,11 +192,8 @@ class TableParser:
 
                         else:
                             trailer = [sym]
-                            
-        print(f'self.follow: \n{self.follow}\n')
 
     def __create_parse_table(self):
-        
         for nonterm, productions in grammar.items():
             for rhs in productions:
                 first_rhs = set()
@@ -236,5 +227,4 @@ class TableParser:
                     for b in self.follow[nonterm]:
                         key = (nonterm, b)
                         self.parse_table[key] = rhs
-                        
-        print(f'PARSE TABLE: \n{self.parse_table}\n')
+        # print(self.parse_table)
