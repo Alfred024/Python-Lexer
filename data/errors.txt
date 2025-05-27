@@ -7,3 +7,6 @@
 4006:Error léxico. No es una palabra clave válida.
 4007:Error léxico. Número o cadena mal formada.
 4011:Error léxico. Error no definido.
+4100:Error sintáctico. El token no coincide con la secuencia de producción.
+4200:Error semántico. La variable no fue declarada.
+4201:Error semántico. La variable ya ha sido declarada.

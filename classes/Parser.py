@@ -1,14 +1,20 @@
 # import data.grammatic as grammatic
+from logging import error
+
+from classes.errors.Errors import SemanticError, SintacticError
+from classes.errors.ErrorsCode import SemanticErrorCode, SintacticErrorCode
+from classes.errors.ErrorsStack import ErrorsStack
 from data.grammatic import grammar, EOF, EPSILON
 from collections import deque
 from classes.Token import Token, TokenCategory
 from classes.SymbolTable import SymbolTable
 
 class TableParser:
-    def __init__(self, tokens: list[Token]):
+    def __init__(self, symtab: SymbolTable, errors: ErrorsStack):
         self.sync_cats = { TokenCategory.DELIM_BRACE_RIGHT, TokenCategory.DELIM_PARENT_RIGHT, TokenCategory.DELIM_POINT }
-        self.tokens = tokens + [ Token(TokenCategory.EOF, value=EOF, row=-1, column=-1) ]
-        self.symtab = SymbolTable()
+        self.tokens = symtab.tokens + [ Token(TokenCategory.EOF, value=EOF, row=-1, column=-1) ]
+        self.symtab = symtab
+        self.errors = errors
         self.stack  = deque()
         self.stack.append(EOF)
         self.stack.append("ListaSentencias")
@@ -33,9 +39,14 @@ class TableParser:
     def look_ahead(self) -> Token:
         return self.tokens[self.pos]
 
-    def __panic(self, msg: str):
+    def __panic(self, tok: Token):
         # 1) Reportar
-        print(f"[Sintactic error:] {msg} (row {self.look_ahead.row})")
+        # print(f"[Sintactic error:] {msg} (row {self.look_ahead.row})")
+        self.errors.push(SintacticError(
+            error_code=SintacticErrorCode.ERROR_4100,
+            line=tok.row,
+            column=tok.column
+        ))
         # 2) Descarta hasta hallar uno de los sync_cats o EOF
         while (self.pos < len(self.tokens)
                and self.look_ahead.category not in self.sync_cats
@@ -72,13 +83,17 @@ class TableParser:
                 if (top == tok.value) or (top == tok.category.name):
                     if tok.category == TokenCategory.IDENTIFIER:
                         if not self.symtab.is_declared(tok.value):
-                            print(f"[Semantic error:] Variable '{tok.value}' no declarada (row {tok.row})")
-
+                            # print(f"[Semantic error:] Variable '{tok.value}' no declarada (row {tok.row})")
                             # recover con panic
-                            self.__panic(f"Esperaba IDENTIFIER declarado, vino '{tok.value}'")
+                            #self.__panic(tok=tok)
+                            self.errors.push(SemanticError(
+                                error_code=SemanticErrorCode.ERROR_4200,
+                                line=tok.row,
+                                column=tok.column
+                            ))
                     self.pos += 1
                 else:
-                    self.__panic(f"Waiting for '{top}', but '{tok.value}' founded instead")
+                    self.__panic( tok=tok)
                 continue
 
             # CASO B: no-terminal
@@ -90,7 +105,7 @@ class TableParser:
                     # si es nullable, lo omitimos
                     if "#" in self.first[top]:  # aquí EPSILON
                         continue
-                    self.__panic(f"No production found for ({top}, {tok.value})")
+                    self.__panic(tok=tok)
                     continue
 
                 # === ACCIONES SEMÁNTICAS PARA DECLARACIÓN ===
@@ -106,7 +121,12 @@ class TableParser:
                     except ValueError:
                         print(f"[Semantic error:] Variable '{name}' ya declarada (row {ident_tok.row})")
                         # panic y continuar
-                        self.__panic(f"Redeclaration of '{name}'")
+                        # self.__panic(tok=tok)
+                        self.errors.push(SemanticError(
+                            error_code=SemanticErrorCode.ERROR_4200,
+                            line=tok.row,
+                            column=tok.column
+                        ))
                         # no hacemos push de la producción
                         continue
 
@@ -114,11 +134,10 @@ class TableParser:
                 for s in reversed(prod):
                     if s != EPSILON:  # EPSILON
                         self.stack.append(s)
-
                 continue
 
             # CASO C: símbolo inválido en pila
-            self.__panic(f"Unknown symbol on stack: {top}")
+            self.__panic(tok=tok)
         return True
     
     def __set_no_terminals(self):

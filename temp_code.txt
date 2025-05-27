@@ -1,1 +1,2 @@
-Bool @x = False;
+Bool @y = False.
+Bool@y = True.

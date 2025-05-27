@@ -27,9 +27,9 @@ import re
 
 
 class Lexer:
-    def __init__(self, file_input: str, symtab: SymbolTable):
+    def __init__(self, file_input: str, symtab: SymbolTable, errors: ErrorsStack):
         self.symtab = symtab
-        self.errors = ErrorsStack()
+        self.errors = errors
         self.file_input = file_input
         self.current_row_ix = 0
         self.current_col_ix = 0

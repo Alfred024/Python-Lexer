@@ -263,8 +263,9 @@ class LexerGUI:
             f.write(code)
 
         symtab = SymbolTable()
-        lexer = Lexer("temp_code.txt", symtab)
-        parser = TableParser(symtab.tokens)
+        errors = ErrorsStack()
+        lexer = Lexer("temp_code.txt", symtab, errors)
+        parser = TableParser(symtab, errors)
         parser.parse()
         for tok in symtab.tokens:
             self.token_tree.insert("", tk.END, values=(
@@ -273,7 +274,7 @@ class LexerGUI:
                 tok.row,
                 tok.column
             ))
-        for name, info in parser.symtab.all_symbols().items():
+        for name, info in symtab.all_symbols().items():
             self.sym_tree.insert("", tk.END, values=(
                 name,
                 info.var_type,
@@ -281,7 +282,7 @@ class LexerGUI:
             ))
         unique_errors = []
         seen = set()
-        for err in lexer.errors.get_all():
+        for err in errors.get_all():
             key = (err._code.value, err._message, err._line, err._column)
             if key not in seen:
                 seen.add(key)
