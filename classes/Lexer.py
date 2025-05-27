@@ -214,27 +214,6 @@ class Lexer:
             self.current_col_ix
         )
 
-        prev_tok = self.symtab.tokens[-1] if self.symtab.tokens else None
-        declares = prev_tok and prev_tok.category == TokenCategory.KEYWORD \
-                   and prev_tok.value in self.declaration_types
-
-        if declares:
-            try:
-                self.symtab.declare(lexeme, prev_tok.value, tok.row)
-            except ValueError as e:
-                self.errors.push(LexicalError(
-                    error_code=LexicalErrorCode.VAR_ALREADY_DECLARED,
-                    line=tok.row,
-                    column=tok.column
-                ))
-        else:
-            if not self.symtab.is_declared(lexeme):
-                self.errors.push(LexicalError(
-                    error_code=LexicalErrorCode.VAR_NOT_DECLARED,
-                    line=tok.row,
-                    column=tok.column
-                ))
-
         self.symtab.add_token(tok)
 
     def __read_delimitator(self, lexeme):

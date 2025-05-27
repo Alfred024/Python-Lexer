@@ -14,6 +14,7 @@ class TableParser:
         self.stack.append("ListaSentencias")
         self.stack.append("Programa")
         self.pos = 0
+        self._last_declared: str = ""
         
         self.terminals = set()
         self.non_terminals = set()
@@ -60,40 +61,63 @@ class TableParser:
                 return True
 
             top = self.stack.pop()
-            look = self.look_ahead
+            tok = self.look_ahead
 
-            # Caso terminal
+            # Caso 1: EOF en pila → fin exitoso
+            if top == EOF:
+                return True
+
+            # CASO A: terminal
             if top in self.terminals:
-                if (top == look.value) or (top == look.category.name):
+                if (top == tok.value) or (top == tok.category.name):
+                    if tok.category == TokenCategory.IDENTIFIER:
+                        if not self.symtab.is_declared(tok.value):
+                            print(f"[Semantic error:] Variable '{tok.value}' no declarada (row {tok.row})")
+                            # recover con panic
+                            self.__panic(f"Esperaba IDENTIFIER declarado, vino '{tok.value}'")
                     self.pos += 1
                 else:
-                    # Aquí saltamos a panic-mode
-                    self.__panic(f"Waiting for '{top}', but '{look.value}' founded instead in column '{look.column}'")
+                    self.__panic(f"Waiting for '{top}', but '{tok.value}' founded instead")
                 continue
 
-            # Caso no-terminal
+            # CASO B: no-terminal
             if top in self.non_terminals:
-                key = ((top, look.value)
-                       if (top, look.value) in self.parse_table
-                       else (top, look.category.name))
+                key = (top, tok.value) if (top, tok.value) in self.parse_table else (top, tok.category.name)
                 prod = self.parse_table.get(key)
-                # Si no hay producción...
+
                 if prod is None:
-                    # Si puede ser ε, simplemente lo omitimos
-                    if EPSILON in self.first[top]:
+                    # si es nullable, lo omitimos
+                    if "#" in self.first[top]:  # aquí EPSILON
                         continue
-                    # Si no, panic-mode
-                    self.__panic(f"No production founded for ({top}, {look.value})")
+                    self.__panic(f"No production found for ({top}, {tok.value})")
                     continue
-                # Expandir la producción
-                for sym in reversed(prod):
-                    if sym != EPSILON:
-                        self.stack.append(sym)
+
+                # === ACCIONES SEMÁNTICAS PARA DECLARACIÓN ===
+                if top == "Declaracion":
+                    # esperamos: [Tipo, IDENTIFIER, DeclaracionDeriv]
+                    tipo_tok = self.tokens[self.pos]       # Num|Text|Bool
+                    ident_tok = self.tokens[self.pos + 1]  # IDENTIFIER
+                    name = ident_tok.value
+                    vtype = tipo_tok.value
+                    try:
+                        self.symtab.declare(name, vtype, ident_tok.row)
+                        self._last_declared = name
+                    except ValueError:
+                        print(f"[Semantic error:] Variable '{name}' ya declarada (row {ident_tok.row})")
+                        # panic y continuar
+                        self.__panic(f"Redeclaration of '{name}'")
+                        # no hacemos push de la producción
+                        continue
+
+                # empujar RHS en orden inverso (omitimos ε)
+                for s in reversed(prod):
+                    if s != EPSILON:  # EPSILON
+                        self.stack.append(s)
+
                 continue
 
-            # Cualquier otro caso inesperado
-            self.__panic(f"Founded unknown symbol {top}")
-
+            # CASO C: símbolo inválido en pila
+            self.__panic(f"Unknown symbol on stack: {top}")
         return True
     
     def __set_no_terminals(self):
@@ -218,4 +242,3 @@ class TableParser:
                     for b in self.follow[nonterm]:
                         key = (nonterm, b)
                         self.parse_table[key] = rhs
-        # print(self.parse_table)

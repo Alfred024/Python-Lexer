@@ -6,12 +6,20 @@ class SymbolInfo:
         self.name = name
         self.var_type = var_type
         self.declared_line = declared_line
+        self.value = None
+        
+    def set_default(self):
+        if self.var_type == "Num":
+            self.value = 0
+        elif self.var_type == "Bool":
+            self.value = False
+        elif self.var_type == "Text":
+            self.value = ""
+        else:
+            self.value = None
 
     def __repr__(self):
         return f"SymbolInfo(name={self.name!r}, type={self.var_type!r}, line={self.declared_line})"
-
-# TODO: Añadir método clean
-# TODO: Añadir inicuialización de los valores de las variables
 
 class SymbolTable:
     def __init__(self):
@@ -31,6 +39,11 @@ class SymbolTable:
                 f"{self._symbols[name].declared_line}"
             )
         self._symbols[name] = SymbolInfo(name, var_type, line)
+    
+    def initialize_default(self, name: str):
+        sym = self.get(name)
+        if sym is not None and sym.value is None:
+            sym.set_default()
 
     def get(self, name: str) -> Optional[SymbolInfo]:
         return self._symbols.get(name)
