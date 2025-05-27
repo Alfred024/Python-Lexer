@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, scrolledtext, PhotoImage, Toplevel, Label
 import re
+
+from classes.Parser import TableParser
 from classes.SymbolTable import SymbolTable
 from classes.Lexer import Lexer
 from classes.Token import TokenCategory, Token, TokenCode
@@ -259,8 +261,11 @@ class LexerGUI:
         code = self.code_editor.get("1.0", tk.END)
         with open("temp_code.txt", "w", encoding="utf-8") as f:
             f.write(code)
+
         symtab = SymbolTable()
         lexer = Lexer("temp_code.txt", symtab)
+        parser = TableParser(symtab.tokens)
+        parser.parse()
         for tok in symtab.tokens:
             self.token_tree.insert("", tk.END, values=(
                 tok.category.value,
@@ -268,7 +273,7 @@ class LexerGUI:
                 tok.row,
                 tok.column
             ))
-        for name, info in symtab.all_symbols().items():
+        for name, info in parser.symtab.all_symbols().items():
             self.sym_tree.insert("", tk.END, values=(
                 name,
                 info.var_type,

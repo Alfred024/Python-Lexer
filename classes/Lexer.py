@@ -240,6 +240,7 @@ class Lexer:
             self.current_row_ix + 1,
             self.current_col_ix
         )
+
         self.symtab.add_token(tok)
 
     def __read_operator(self, lexeme):

@@ -6,9 +6,9 @@ from classes.Parser import TableParser
 
 symtab = SymbolTable()
 lexer = Lexer(project_config['sample_code_file'], symtab)
-parser = TableParser(symtab.tokens, symtab)
+parser = TableParser(symtab.tokens)
 parser.parse()
 
 # print("\nTokens:", symtab.tokens)
 # print("\nSymbols declared:", symtab.all_symbols())
-# print(parser.symtab.all_symbols())
+print(parser.symtab.all_symbols())

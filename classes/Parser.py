@@ -5,10 +5,10 @@ from classes.Token import Token, TokenCategory
 from classes.SymbolTable import SymbolTable
 
 class TableParser:
-    def __init__(self, tokens: list[Token], symtab: SymbolTable):
+    def __init__(self, tokens: list[Token]):
         self.sync_cats = { TokenCategory.DELIM_BRACE_RIGHT, TokenCategory.DELIM_PARENT_RIGHT, TokenCategory.DELIM_POINT }
         self.tokens = tokens + [ Token(TokenCategory.EOF, value=EOF, row=-1, column=-1) ]
-        self.symtab = symtab
+        self.symtab = SymbolTable()
         self.stack  = deque()
         self.stack.append(EOF)
         self.stack.append("ListaSentencias")
@@ -73,6 +73,7 @@ class TableParser:
                     if tok.category == TokenCategory.IDENTIFIER:
                         if not self.symtab.is_declared(tok.value):
                             print(f"[Semantic error:] Variable '{tok.value}' no declarada (row {tok.row})")
+
                             # recover con panic
                             self.__panic(f"Esperaba IDENTIFIER declarado, vino '{tok.value}'")
                     self.pos += 1
