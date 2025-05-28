@@ -181,7 +181,7 @@ class LexerGUI:
         menu.add_command(label="Guía Léxica", command=lambda: self.open_pdf("https://drive.google.com/file/d/1-G4Ma0HKbx-xyKwdZs7pIHqICJ1NYRZA/view?usp=sharing"))
         menu.add_command(label="Guía Sintáctica", command=lambda: self.open_pdf("https://drive.google.com/file/d/13Z528bi9w-vK2FFX8K5XsM1ZfvbKomOB/view?usp=sharing"))
         menu.add_command(label="Guía Semántica", command=lambda: self.open_pdf("https://drive.google.com/file/d/1GZ16CPO7RLuO6AnULWygA5RrorPaJ19A/view?usp=sharing"))
-        menu.add_command(label="Guía Lenguaje", command=lambda: self.open_pdf("https://drive.google.com/file/d/1xp75PE4ScH8vCl7PpOz-9XtvGVu6difN/view?usp=sharing"))
+        menu.add_command(label="Guía Lenguaje", command=lambda: self.open_pdf("https://drive.google.com/file/d/1-V0kYMiQ6bKrV3Tvene8lkUF02uHOcqj/view?usp=sharing"))
         guide_menu["menu"] = menu
         guide_menu.pack(side="left", padx=(0, 10))
         about_button = ttk.Button(top_frame, text="About Us", command=self.show_about_us)
