@@ -264,9 +264,10 @@ class LexerGUI:
 
         symtab = SymbolTable()
         errors = ErrorsStack()
-        lexer = Lexer("temp_code.txt", symtab, errors)
+        Lexer("temp_code.txt", symtab, errors)
         parser = TableParser(symtab, errors)
         parser.parse()
+
         for tok in symtab.tokens:
             self.token_tree.insert("", tk.END, values=(
                 tok.category.value,
