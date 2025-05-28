@@ -1,2 +1,2 @@
-Bool @y = False.
-Bool@y = True.
+Num @x = 10.
+Num @x = 20.

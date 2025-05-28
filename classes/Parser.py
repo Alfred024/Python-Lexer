@@ -83,9 +83,6 @@ class TableParser:
                 if (top == tok.value) or (top == tok.category.name):
                     if tok.category == TokenCategory.IDENTIFIER:
                         if not self.symtab.is_declared(tok.value):
-                            # print(f"[Semantic error:] Variable '{tok.value}' no declarada (row {tok.row})")
-                            # recover con panic
-                            #self.__panic(tok=tok)
                             self.errors.push(SemanticError(
                                 error_code=SemanticErrorCode.ERROR_4200,
                                 line=tok.row,
@@ -111,24 +108,25 @@ class TableParser:
                 # === ACCIONES SEMÁNTICAS PARA DECLARACIÓN ===
                 if top == "Declaracion":
                     # esperamos: [Tipo, IDENTIFIER, DeclaracionDeriv]
-                    tipo_tok = self.tokens[self.pos]       # Num|Text|Bool
                     ident_tok = self.tokens[self.pos + 1]  # IDENTIFIER
-                    name = ident_tok.value
-                    vtype = tipo_tok.value
-                    try:
-                        self.symtab.declare(name, vtype, ident_tok.row)
-                        self._last_declared = name
-                    except ValueError:
+                    if not self.symtab.is_declared(ident_tok.value):
+                        tipo_tok = self.tokens[self.pos]       # Num|Text|Bool
+                        if ident_tok.category == TokenCategory.IDENTIFIER:
+                            print(f'Encontré un {ident_tok}')
+                            name = ident_tok.value
+                            vtype = tipo_tok.value
+                            self.symtab.declare(name, vtype, ident_tok.row)
+                            self._last_declared = name
+                    else:
                         print(f"[Semantic error:] Variable '{name}' ya declarada (row {ident_tok.row})")
                         # panic y continuar
-                        # self.__panic(tok=tok)
                         self.errors.push(SemanticError(
                             error_code=SemanticErrorCode.ERROR_4200,
                             line=tok.row,
                             column=tok.column
                         ))
                         # no hacemos push de la producción
-                        continue
+                        # continue
 
                 # empujar RHS en orden inverso (omitimos ε)
                 for s in reversed(prod):
