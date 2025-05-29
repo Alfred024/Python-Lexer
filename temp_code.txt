@@ -1,1 +1,1 @@
-Num @x = True.
+Num @x = 10.

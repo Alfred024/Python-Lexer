@@ -234,10 +234,10 @@ class LexerGUI:
                             columnspan=1, sticky="nsew")
         self.sym_tree = ttk.Treeview(
             self.sym_frame,
-            columns=("Name", "VarType", "Line"),
+            columns=("Name", "VarType", "Value", "Line"),
             show="headings"
         )
-        for column in ("Name", "VarType", "Line"):
+        for column in ("Name", "VarType", "Value", "Line"):
             self.sym_tree.heading(column, text=column)
         self.sym_tree.pack(expand=True, fill="both", padx=5, pady=5)
         self.error_frame = ttk.LabelFrame(root, text="Errors")
@@ -279,6 +279,7 @@ class LexerGUI:
             self.sym_tree.insert("", tk.END, values=(
                 name,
                 info.var_type,
+                info.value,
                 info.declared_line
             ))
         unique_errors = []

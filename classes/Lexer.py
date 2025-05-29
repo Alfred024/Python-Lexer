@@ -83,11 +83,7 @@ class Lexer:
                                        id_matrix.identifier_matrix)
             self.__read_identifier(lexeme)
         elif char == '$':
-            # TODO: Quitar la construcción del lexema cuando vea un comentario
-            lexeme = self.__get_lexeme(TokenCategory.COMMENT,
-                                       CommentStates,
-                                       comment_matrix.comment_matrix)
-            self.__read_comment(lexeme)
+            self.__comment_case()
         elif char in 'NTBWFIER':  # inicio posible keyword
             lexeme = self.__get_lexeme(TokenCategory.KEYWORD,
                                        KeywordStates,
@@ -141,6 +137,11 @@ class Lexer:
 
         self.current_col_ix -= 1
         return lexeme
+    
+    def __comment_case(self) -> str:
+        char = self.row_list[self.current_row_ix][self.current_col_ix]
+        while char != '\n' and self.current_col_ix < len(self.row_list[self.current_row_ix]):
+            self.current_col_ix += 1
 
     def __get_malformed_lexeme(self, lexeme=''):
         pos = self.current_col_ix

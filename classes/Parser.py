@@ -115,7 +115,8 @@ class TableParser:
                             print(f'Encontré un {ident_tok}')
                             name = ident_tok.value
                             vtype = tipo_tok.value
-                            self.symtab.declare(name, vtype, ident_tok.row)
+                            real_val = self.tokens[self.pos + 3].value
+                            self.symtab.declare(name, vtype, ident_tok.row, real_val)
                             self._last_declared = name
                     else:
                         print(f"[Semantic error:] Variable '{name}' ya declarada (row {ident_tok.row})")

@@ -2,7 +2,7 @@ from typing import Dict, List, Optional
 from classes.Token import Token, TokenCategory
 
 class SymbolInfo:
-    def __init__(self, name: str, var_type: str, declared_line: int):
+    def __init__(self, name: str, var_type: str, declared_line: int, value):
         self.name = name
         self.var_type = var_type
         self.declared_line = declared_line
@@ -32,13 +32,13 @@ class SymbolTable:
     def is_declared(self, name: str) -> bool:
         return name in self._symbols
 
-    def declare(self, name: str, var_type: str, line: int) -> None:
+    def declare(self, name: str, var_type: str, line: int, value) -> None:
         if self.is_declared(name):
             raise ValueError(
                 f"Variable '{name}' ya declarada en línea "
                 f"{self._symbols[name].declared_line}"
             )
-        self._symbols[name] = SymbolInfo(name, var_type, line)
+        self._symbols[name] = SymbolInfo(name, var_type, line, value)
     
     def initialize_default(self, name: str):
         sym = self.get(name)
