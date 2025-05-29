@@ -1,1 +1,2 @@
-Num @x = 10+True.
+Num @x.
+

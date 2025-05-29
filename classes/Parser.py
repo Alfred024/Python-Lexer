@@ -111,9 +111,19 @@ class TableParser:
                     # esperamos: [Tipo, IDENTIFIER, DeclaracionDeriv]
                     ident_tok = self.tokens[self.pos + 1]  # IDENTIFIER
                     if not self.symtab.is_declared(ident_tok.value):
-                        tipo_tok = self.tokens[self.pos]
+                        name = ident_tok.value
+                        
+                        # Si no se definió un vlaor, el programa lo incializa
+                        if self.tokens[self.pos + 2].category == TokenCategory.DELIM_POINT:
+                            print('Le pond´re un valor por defecto...')
+                            tipo_tok = self.tokens[self.pos]
+                            vtype = tipo_tok.value
+                            self.symtab.declare(name, vtype, ident_tok.row, 'NADA')
+                            # symbol = self.symtab.get(name)
+                            self.symtab.initialize_default(name) 
+                        
                         if ident_tok.category == TokenCategory.IDENTIFIER and self.__is__valid_ident_type():
-                            name = ident_tok.value
+                            tipo_tok = self.tokens[self.pos]
                             vtype = tipo_tok.value
                             real_val = self.tokens[self.pos + 3].value
                             self.symtab.declare(name, vtype, ident_tok.row, real_val)

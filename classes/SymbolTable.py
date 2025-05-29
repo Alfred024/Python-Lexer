@@ -42,7 +42,7 @@ class SymbolTable:
     
     def initialize_default(self, name: str):
         sym = self.get(name)
-        if sym is not None and sym.value is None:
+        if sym is not None:
             sym.set_default()
 
     def get(self, name: str) -> Optional[SymbolInfo]:
