@@ -69,6 +69,7 @@ class TableParser:
         while self.stack:
             # Si ya llegamos al EOF real, éxito
             if self.look_ahead.category == TokenCategory.EOF:
+                self._check_aritmetic_types()
                 return True
 
             top = self.stack.pop()
@@ -112,7 +113,6 @@ class TableParser:
                     if not self.symtab.is_declared(ident_tok.value):
                         tipo_tok = self.tokens[self.pos]
                         if ident_tok.category == TokenCategory.IDENTIFIER and self.__is__valid_ident_type():
-                            print(f'Encontré un {ident_tok}')
                             name = ident_tok.value
                             vtype = tipo_tok.value
                             real_val = self.tokens[self.pos + 3].value
@@ -137,8 +137,7 @@ class TableParser:
 
             # CASO C: símbolo inválido en pila
             self.__panic(tok=tok)
-        return True
-    
+                
     def __set_no_terminals(self):
         self.non_terminals = set(grammar.keys())
     
@@ -298,4 +297,44 @@ class TableParser:
                         column=real_value_tok.column
                     ))
                     return False
-               
+    
+    def _check_aritmetic_types(self):
+        # Recorremos la lista de tokens buscando operadores aritméticos
+        for i in range(len(self.tokens)-2):
+            left, op, right = self.tokens[i], self.tokens[i+1], self.tokens[i+2]
+            if op.category == TokenCategory.ARIT_OPER:
+                try:
+                    lt = self._type_of(left)
+                    rt = self._type_of(right)
+                except RuntimeError as e:
+                    # si falla en determinar tipo, se reporta como error semántico
+                    self.errors.push(SemanticError(
+                        error_code=SemanticErrorCode.ERROR_4204,
+                        line=op.row,
+                        column=op.column
+                    ))
+                    continue
+
+                if lt != "Num" or rt != "Num":
+                    self.errors.push(SemanticError(
+                        error_code=SemanticErrorCode.ERROR_4202,
+                        line=op.row,
+                        column=op.column
+                    ))
+
+    def _type_of(self, token: Token) -> str:
+        if token.category == TokenCategory.NUM:
+            return "Num"
+        if token.category == TokenCategory.BOOL:
+            return "Bool"
+        if token.category == TokenCategory.TEXT:
+            return "Text"
+        if token.category == TokenCategory.IDENTIFIER:
+            # buscar la variable en la tabla de símbolos
+            info = self.symtab.get(token.value)
+            if info is None:
+                # Variable no declarada (quizá ya lo chequeaste antes)
+                raise RuntimeError(f"Variable no declarada {token.value}")
+            return info.var_type
+        # otros casos (p.ej. literals especiales)… 
+        raise RuntimeError(f"No sé el tipo de {token}")

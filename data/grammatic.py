@@ -61,12 +61,9 @@ grammar = {
     "CondPrime": [
         ["LOG_OPER", "Cond"],
         [EPSILON]
-        # ["LOG_OPER", "RelExpr", "CondPrime"],
-        # [EPSILON]
     ],
     "RelExpr": [
         ["Exp", "REL_OPER", "Exp"],
-        # ["(", "Cond", ")"],
     ],
     "Exp": [
         ["Term","Exp'"]
@@ -92,3 +89,7 @@ grammar = {
         ["(","Exp",")"]
     ],
 }
+
+# Si la gramática es un factor y el sigueinte token es un operador aritmético, debe de comprobar que el sigueinte token sea de la misma categoría. 
+    # Si es identifier, busca la categoría en la tabla de símbolos,
+    # Si no es identifier, busca la categoría directamente
