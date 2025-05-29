@@ -110,8 +110,8 @@ class TableParser:
                     # esperamos: [Tipo, IDENTIFIER, DeclaracionDeriv]
                     ident_tok = self.tokens[self.pos + 1]  # IDENTIFIER
                     if not self.symtab.is_declared(ident_tok.value):
-                        tipo_tok = self.tokens[self.pos]       # Num|Text|Bool
-                        if ident_tok.category == TokenCategory.IDENTIFIER:
+                        tipo_tok = self.tokens[self.pos]
+                        if ident_tok.category == TokenCategory.IDENTIFIER and self.__is__valid_ident_type():
                             print(f'Encontré un {ident_tok}')
                             name = ident_tok.value
                             vtype = tipo_tok.value
@@ -260,3 +260,41 @@ class TableParser:
                     for b in self.follow[nonterm]:
                         key = (nonterm, b)
                         self.parse_table[key] = rhs
+                        
+    def __is__valid_ident_type(self):
+        delim_tok = self.tokens[self.pos + 2]
+        
+        if(delim_tok.category == TokenCategory.ASIG_OPER):
+            real_value_tok = self.tokens[self.pos + 3]
+            
+            if(self.look_ahead.value == 'Bool'):
+                if( real_value_tok.category == TokenCategory.BOOL ):
+                    return True
+                else:
+                    self.errors.push(SemanticError(
+                        error_code=SemanticErrorCode.ERROR_4202,
+                        line=real_value_tok.row,
+                        column=real_value_tok.column
+                    ))
+                    return False
+            elif(self.look_ahead.value == 'Num'):
+                if( real_value_tok.category == TokenCategory.NUM ):
+                    return True
+                else:
+                    self.errors.push(SemanticError(
+                        error_code=SemanticErrorCode.ERROR_4202,
+                        line=real_value_tok.row,
+                        column=real_value_tok.column
+                    ))
+                    return False
+            elif(self.look_ahead.value == 'Text'):
+                if( real_value_tok.category == TokenCategory.TEXT ):
+                    return True
+                else:
+                    self.errors.push(SemanticError(
+                        error_code=SemanticErrorCode.ERROR_4202,
+                        line=real_value_tok.row,
+                        column=real_value_tok.column
+                    ))
+                    return False
+               

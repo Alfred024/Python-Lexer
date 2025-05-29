@@ -10,3 +10,4 @@
 4100 : Error sintáctico. El token no coincide con la secuencia de producción.
 4200 : Error semántico. La variable no fue declarada.
 4201 : Error semántico. La variable ya ha sido declarada.
+4202 : Error semántico. El identificador delcarado no acepta ese tipo de datos.

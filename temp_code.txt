@@ -1,2 +1,1 @@
-Boo @x = False;
-Bool @x = True
+Num @x = True.
