@@ -1,1 +1,62 @@
-Num @x = 10.
+$ Programa de ejemplo de 50 líneas
+Num @n = 10.
+Num @fact = 1.
+Num @i = 1.
+
+$ Inicialización completa
+$ Calcula factorial de @n
+While (@i <= @n) {
+   @fact = @fact * @i.
+   @i = @i + 1.
+}
+
+If((10 < 20) && (10 > 5 * 2)){
+   Write("Verdader").
+}
+
+$ Fin ciclo factorial
+Write(@fact).
+
+$ Salida del factorial
+Text @saludo = "Hola".
+Text @nombre="".
+
+$ Leer nombre de usuario
+Read(@nombre).
+Write(@saludo + ", " + @nombre + "!").
+
+$ Saludo personalizado
+Num @esPar = 10.
+If (@n / 2 > @n) {
+   @esPar = True.
+} Else {
+   @esPar = False.
+}
+Write(@esPar).
+
+$ Verificar paridad
+
+$ Suma de primeros k números
+Num @k = 5.
+Num @suma = 0.
+For (@i = 1. @i <= @k. @i = @i + 1.) {
+   @suma = @suma + @i.
+   Write(@i).
+}
+Write(@suma).
+
+$ Fin suma iterativa
+$ Simulación de arreglo con variables
+Num @a2 = 7.
+Num @a3 = 2.
+Num @max = 10.
+If (@a2 > @max) {
+   @max = @a2.
+}
+If (@a3 > @max) {
+   @max = @a3.
+}
+Write(@max).
+$ Fin selección de máximo
+$ Fin de programa
+

@@ -6,7 +6,7 @@ class SymbolInfo:
         self.name = name
         self.var_type = var_type
         self.declared_line = declared_line
-        self.value = None
+        self.value = value
         
     def set_default(self):
         if self.var_type == "Num":
